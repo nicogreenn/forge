@@ -49,12 +49,12 @@ export default function Page() {
         <div style={{ background: '#1c1c1c', borderRadius: 16, padding: 24, border: '1px solid #2a2a2a' }}>
           <input
             type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-            style={{ width: '100%', background: '#242424', border: '1px solid #2a2a2a', borderRadius: 10, color: '#f5f5f5', fontFamily: 'inherit', fontSize: 14, padding: '12px 14px', marginBottom: 12, outline: 'none' }}
+            style={{ width: '100%', boxSizing: 'border-box', background: '#242424', border: '1px solid #2a2a2a', borderRadius: 10, color: '#f5f5f5', fontFamily: 'inherit', fontSize: 14, padding: '12px 14px', marginBottom: 12, outline: 'none' }}
           />
           <input
             type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            style={{ width: '100%', background: '#242424', border: '1px solid #2a2a2a', borderRadius: 10, color: '#f5f5f5', fontFamily: 'inherit', fontSize: 14, padding: '12px 14px', marginBottom: error ? 12 : 20, outline: 'none' }}
+            style={{ width: '100%', boxSizing: 'border-box', background: '#242424', border: '1px solid #2a2a2a', borderRadius: 10, color: '#f5f5f5', fontFamily: 'inherit', fontSize: 14, padding: '12px 14px', marginBottom: error ? 12 : 20, outline: 'none' }}
           />
           {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
           <button onClick={handleSubmit}
