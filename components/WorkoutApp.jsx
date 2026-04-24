@@ -91,7 +91,7 @@ const DAYS = [
     ]
   },
   {
-    id: "day4", label: "Day 4", title: "Push", day: "Thursday",
+    id: "day4", label: "Day 3", title: "Push", day: "Thursday",
     exercises: [
       { id: "d4e1", num: "I",   name: "Dead Hangs — Static Hold",         sets: 4, reps: "10–30", rest: "1:00", target: "BW",   note: "Sink into it, aim for 30 seconds per set" },
       { id: "d4e2", num: "II",  name: "Decline Push-ups",                 sets: 4, reps: "8–20",  rest: "3:00", target: "BW",   note: "Feet elevated, still focus on full scapular extension and retraction on each rep" },
@@ -102,7 +102,7 @@ const DAYS = [
     ]
   },
   {
-    id: "day5", label: "Day 5", title: "Pull", day: "Friday",
+    id: "day5", label: "Day 4", title: "Pull", day: "Friday",
     exercises: [
       { id: "d5e1", num: "I",   name: "Banded Chin-up Negatives",         sets: 4, reps: "8–12",  rest: "3:00", target: "Black", note: "One foot in band, set grip before you jump, hold at top for 5 seconds, then descend" },
       { id: "d5e2", num: "II",  name: "Hollow Body Holds — Static Hold",  sets: 4, reps: "5–30",  rest: "1:00", target: "BW",    note: null },
@@ -346,14 +346,6 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, unit }) {
   const [bwDraft, setBwDraft] = useState(String(bodyweight ?? ""));
   const [editingBw, setEditingBw] = useState(false);
 
-  const allExercises = DAYS.flatMap(d => d.exercises).filter(e => typeof e.target === "number");
-  const logged = allExercises.filter(e => weights[e.id] !== null && weights[e.id] !== undefined);
-  const atTarget = allExercises.filter(e => weights[e.id] !== null && weights[e.id] !== undefined && weights[e.id] >= e.target);
-  const progressPct = allExercises.length ? Math.round((logged.length / allExercises.length) * 100) : 0;
-
-  const totalSets = DAYS.flatMap(d => d.exercises).reduce((acc, e) => acc + e.sets, 0);
-  const totalExercises = DAYS.flatMap(d => d.exercises).length;
-
   return (
     <div style={{ padding: "80px 16px 100px" }}>
       {/* Hero */}
@@ -389,40 +381,6 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, unit }) {
             )}
             {!bodyweight && <div style={{ fontSize: 11, color: T.dim, marginTop: 4 }}>tap to log your weight</div>}
           </div>
-          <div style={{ position: "relative", width: 90, height: 90 }}>
-            <Ring pct={progressPct} size={90} stroke={8} />
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: 18, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: T.primary }}>{progressPct}%</span>
-              <span style={{ fontSize: 9, color: T.muted, letterSpacing: 0.5 }}>logged</span>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Stats row */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-        <Card style={{ flex: 1, textAlign: "center" }}>
-          <div style={{ fontSize: 34, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: atTarget.length > 0 ? T.green : T.dim }}>{atTarget.length}</div>
-          <div style={{ fontSize: 10, color: T.muted, letterSpacing: 1, textTransform: "uppercase" }}>At Target</div>
-        </Card>
-        <Card style={{ flex: 1, textAlign: "center" }}>
-          <div style={{ fontSize: 34, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: T.primary }}>{logged.length}</div>
-          <div style={{ fontSize: 10, color: T.muted, letterSpacing: 1, textTransform: "uppercase" }}>Logged</div>
-        </Card>
-        <Card style={{ flex: 1, textAlign: "center" }}>
-          <div style={{ fontSize: 34, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: T.text }}>{totalSets}</div>
-          <div style={{ fontSize: 10, color: T.muted, letterSpacing: 1, textTransform: "uppercase" }}>Total Sets</div>
-        </Card>
-      </div>
-
-      {/* Overall progress bar */}
-      <Card style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-          <Label>Overall Progress</Label>
-          <span style={{ fontSize: 11, color: T.muted }}>{logged.length} / {allExercises.length} weights logged</span>
-        </div>
-        <div style={{ height: 8, borderRadius: 4, background: T.card2, overflow: "hidden" }}>
-          <div style={{ height: "100%", width: `${progressPct}%`, background: `linear-gradient(90deg,${T.gradA},${T.gradB})`, borderRadius: 4, transition: "width .6s" }} />
         </div>
       </Card>
 
@@ -452,30 +410,19 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, unit }) {
         </div>
       </Card>
 
-      {/* Day summary pills */}
+      {/* Day summary */}
       <Card>
         <Label>Plan Summary</Label>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {DAYS.map(day => {
-            const dayEx = day.exercises.filter(e => typeof e.target === "number");
-            const dayLogged = dayEx.filter(e => weights[e.id] !== null && weights[e.id] !== undefined).length;
-            const pct = dayEx.length ? Math.round((dayLogged / dayEx.length) * 100) : 0;
-            return (
-              <div key={day.id}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 13 }}>{day.title === "Push" ? "💪" : "🏋️"}</span>
-                    <span style={{ fontSize: 13, color: T.text, fontWeight: 500 }}>{day.label} — {day.title}</span>
-                    <span style={{ fontSize: 11, color: T.muted }}>{day.day}</span>
-                  </div>
-                  <span style={{ fontSize: 11, color: T.muted }}>{dayLogged}/{dayEx.length}</span>
-                </div>
-                <div style={{ height: 5, borderRadius: 3, background: T.card2, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${pct}%`, background: pct === 100 ? T.green : T.primary, borderRadius: 3, transition: "width .5s" }} />
-                </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {DAYS.map(day => (
+            <div key={day.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 16 }}>{day.title === "Push" ? "💪" : "🏋️"}</span>
+              <div>
+                <div style={{ fontSize: 13, color: T.text, fontWeight: 500 }}>{day.label} — {day.title}</div>
+                <div style={{ fontSize: 11, color: T.muted }}>{day.day}</div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </Card>
     </div>
