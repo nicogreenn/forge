@@ -37,7 +37,7 @@ export default function Page() {
   return (
     <div style={{ background: '#111111', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Jost',sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Jost:wght@300;400;500;600&family=Outfit:wght@400;700&display=swap" rel="stylesheet" />
-      <div style={{ width: '100%', maxWidth: 400, padding: 24 }}>
+      <div style={{ width: '100%', maxWidth: 360, padding: 24, boxSizing: 'border-box' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🔥</div>
           <div style={{ fontSize: 32, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: 'linear-gradient(135deg,#f97316,#facc15)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
