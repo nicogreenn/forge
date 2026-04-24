@@ -6,45 +6,45 @@ import { supabase } from '@/lib/supabase'
 const THEMES = {
   fire: {
     name: "Fire", emoji: "🔥",
-    bg: "#111111", card: "#1c1c1c", card2: "#242424", border: "#2a2a2a", navBg: "#161616",
+    bg: "#1a1111", card: "#2a1c1c", card2: "#342424", border: "#4a3030", navBg: "#161010",
     primary: "#f97316", secondary: "#facc15", accent: "#fb923c",
-    red: "#ef4444", green: "#4ade80", text: "#f5f5f5", muted: "#9ca3af", dim: "#4b5563",
+    red: "#ef4444", green: "#4ade80", text: "#faf0f0", muted: "#b09090", dim: "#6a4a4a",
     gradA: "#f97316", gradB: "#facc15", glow: "rgba(249,115,22,0.25)",
     catColors: ["#f97316","#fb923c","#facc15","#fbbf24","#f59e0b","#ea580c","#fdba74","#fed7aa","#4ade80","#6b7280"],
     light: { bg: "#fafaf9", card: "#ffffff", card2: "#f5f0eb", border: "#e8ddd0", navBg: "#ffffff", text: "#1a1208", muted: "#78716c", dim: "#c4b5a0" },
   },
   water: {
     name: "Water", emoji: "🌊",
-    bg: "#080f1a", card: "#0d1929", card2: "#112236", border: "#1a3a5c", navBg: "#060d16",
+    bg: "#0e1620", card: "#162030", card2: "#1c2a3e", border: "#284860", navBg: "#0a1018",
     primary: "#38bdf8", secondary: "#7dd3fc", accent: "#0ea5e9",
-    red: "#f87171", green: "#34d399", text: "#e0f2fe", muted: "#7ea8c9", dim: "#2d5a7a",
+    red: "#f87171", green: "#34d399", text: "#e8f4fe", muted: "#8ab8d8", dim: "#3a6888",
     gradA: "#38bdf8", gradB: "#818cf8", glow: "rgba(56,189,248,0.25)",
     catColors: ["#38bdf8","#0ea5e9","#7dd3fc","#818cf8","#a78bfa","#60a5fa","#93c5fd","#bae6fd","#34d399","#64748b"],
     light: { bg: "#f0f9ff", card: "#ffffff", card2: "#e0f2fe", border: "#bae6fd", navBg: "#ffffff", text: "#082f49", muted: "#4a90a4", dim: "#a5d8f0" },
   },
   nature: {
     name: "Nature", emoji: "🌿",
-    bg: "#0a110a", card: "#121a12", card2: "#182018", border: "#243824", navBg: "#080e08",
+    bg: "#101810", card: "#1a2418", card2: "#202e1e", border: "#304830", navBg: "#0c140c",
     primary: "#4ade80", secondary: "#a3e635", accent: "#22c55e",
-    red: "#f87171", green: "#86efac", text: "#ecfdf0", muted: "#86a886", dim: "#3a5a3a",
+    red: "#f87171", green: "#86efac", text: "#f0fdf0", muted: "#90b890", dim: "#487048",
     gradA: "#4ade80", gradB: "#a3e635", glow: "rgba(74,222,128,0.25)",
     catColors: ["#4ade80","#22c55e","#a3e635","#84cc16","#65a30d","#16a34a","#86efac","#bbf7d0","#34d399","#6b7280"],
     light: { bg: "#f7fef7", card: "#ffffff", card2: "#f0fdf4", border: "#bbf7d0", navBg: "#ffffff", text: "#052e16", muted: "#4a7c59", dim: "#a7d9b2" },
   },
   earth: {
     name: "Earth", emoji: "🪨",
-    bg: "#0f0b08", card: "#1c1510", card2: "#241c14", border: "#3a2d1f", navBg: "#0c0906",
-    primary: "#c8854a", secondary: "#e8b87a", accent: "#a0622a",
-    red: "#e05a5a", green: "#7abf7a", text: "#f5ede3", muted: "#a08060", dim: "#5a3f28",
-    gradA: "#c8854a", gradB: "#e8b87a", glow: "rgba(200,133,74,0.25)",
-    catColors: ["#c8854a","#a0622a","#e8b87a","#d4955a","#b87040","#8b4513","#deb887","#f5deb3","#7abf7a","#6b5a4a"],
+    bg: "#1a1208", card: "#2a1f14", card2: "#342618", border: "#4a3828", navBg: "#161008",
+    primary: "#d4924f", secondary: "#ecc47a", accent: "#b8722a",
+    red: "#e05a5a", green: "#7abf7a", text: "#f8f0e6", muted: "#b89878", dim: "#6a5040",
+    gradA: "#d4924f", gradB: "#ecc47a", glow: "rgba(212,146,79,0.25)",
+    catColors: ["#d4924f","#b8722a","#ecc47a","#d4955a","#b87040","#8b4513","#deb887","#f5deb3","#7abf7a","#6b5a4a"],
     light: { bg: "#fdf8f2", card: "#ffffff", card2: "#faf0e6", border: "#e8d5bc", navBg: "#ffffff", text: "#2c1a0a", muted: "#8b6040", dim: "#d4b896" },
   },
   floral: {
     name: "Floral", emoji: "🌸",
-    bg: "#120a12", card: "#1c1020", card2: "#231428", border: "#3a1f42", navBg: "#0e080f",
+    bg: "#1a1020", card: "#281828", card2: "#321e34", border: "#4a2e52", navBg: "#140c18",
     primary: "#e879f9", secondary: "#f9a8d4", accent: "#c026d3",
-    red: "#fb7185", green: "#4ade80", text: "#fdf4ff", muted: "#c4a8cc", dim: "#5a3a62",
+    red: "#fb7185", green: "#4ade80", text: "#fef0ff", muted: "#d0a8d8", dim: "#6a4870",
     gradA: "#e879f9", gradB: "#f9a8d4", glow: "rgba(232,121,249,0.25)",
     catColors: ["#e879f9","#c026d3","#f9a8d4","#f0abfc","#a855f7","#db2777","#fda4af","#fbcfe8","#4ade80","#6b7280"],
     light: { bg: "#fdf4ff", card: "#ffffff", card2: "#fae8ff", border: "#f0abfc", navBg: "#ffffff", text: "#3b0764", muted: "#9d5aad", dim: "#e4b8f0" },
@@ -720,8 +720,8 @@ export default function WorkoutApp({ user, onSignOut }) {
 
   if (loadingSettings) {
     return (
-      <div style={{ background: "#0f0b08", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ color: "#c8854a", fontFamily: "'Outfit',sans-serif", fontSize: 14, letterSpacing: 2 }}>LOADING...</div>
+      <div style={{ background: "#1a1208", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#d4924f", fontFamily: "'Outfit',sans-serif", fontSize: 14, letterSpacing: 2 }}>LOADING...</div>
       </div>
     );
   }
