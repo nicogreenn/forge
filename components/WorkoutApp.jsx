@@ -152,13 +152,12 @@ const Ring = ({ pct, size = 90, stroke = 8, color }) => {
 function BottomNav({ tab, setTab }) {
   const T = useT();
   const tabs = [
-    { id: "overview",  label: "Home",     icon: "◈" },
-    { id: "day1",      label: "Mon",      icon: "①" },
-    { id: "day2",      label: "Tue",      icon: "②" },
-    { id: "day4",      label: "Thu",      icon: "③" },
-    { id: "day5",      label: "Fri",      icon: "④" },
-    { id: "timer",     label: "Timer",    icon: "◷" },
-    { id: "settings",  label: "Settings", icon: "◬" },
+    { id: "overview", label: "Home",  icon: "◈" },
+    { id: "day1",     label: "Mon",   icon: "①" },
+    { id: "day2",     label: "Tue",   icon: "②" },
+    { id: "day4",     label: "Thu",   icon: "③" },
+    { id: "day5",     label: "Fri",   icon: "④" },
+    { id: "timer",    label: "Timer", icon: "◷" },
   ];
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, maxWidth: 480, margin: "0 auto", background: T.navBg, borderTop: `1px solid ${T.border}`, display: "flex", zIndex: 100 }}>
@@ -167,8 +166,8 @@ function BottomNav({ tab, setTab }) {
         return (
           <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, background: "none", border: "none", padding: "10px 1px 12px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, position: "relative" }}>
             {active && <div style={{ position: "absolute", top: 0, left: "15%", right: "15%", height: 2, background: `linear-gradient(90deg,${T.gradA},${T.gradB})`, borderRadius: "0 0 4px 4px", boxShadow: `0 0 10px ${T.primary}` }} />}
-            <span style={{ fontSize: 14, color: active ? T.primary : T.dim, transition: "color .2s" }}>{t.icon}</span>
-            <span style={{ fontSize: 7, letterSpacing: 0.3, color: active ? T.primary : T.dim, fontFamily: "'Outfit',sans-serif", textTransform: "uppercase" }}>{t.label}</span>
+            <span style={{ fontSize: 15, color: active ? T.primary : T.dim, transition: "color .2s" }}>{t.icon}</span>
+            <span style={{ fontSize: 8, letterSpacing: 0.3, color: active ? T.primary : T.dim, fontFamily: "'Outfit',sans-serif", textTransform: "uppercase" }}>{t.label}</span>
           </button>
         );
       })}
@@ -346,86 +345,76 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, unit }) {
   const T = useT();
   const [bwDraft, setBwDraft] = useState(String(bodyweight ?? ""));
   const [editingBw, setEditingBw] = useState(false);
+  const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div style={{ padding: "80px 16px 100px" }}>
-      {/* Hero */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 11, color: T.muted, letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>Training Regime · 2026</div>
-        <div style={{ fontSize: 38, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: `linear-gradient(135deg,${T.gradA},${T.gradB})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.15, marginBottom: 6 }}>
+    <div style={{ padding: "70px 0 100px" }}>
+      {/* Hero banner */}
+      <div style={{ padding: "28px 20px 24px", borderBottom: `1px solid ${T.border}`, marginBottom: 16, background: `linear-gradient(160deg,${T.card} 0%,${T.bg} 100%)` }}>
+        <div style={{ fontSize: 10, color: T.muted, letterSpacing: 3, textTransform: "uppercase", marginBottom: 4 }}>{today}</div>
+        <div style={{ fontSize: 42, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: `linear-gradient(135deg,${T.gradA},${T.gradB})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.1, marginBottom: 4 }}>
           Nico's Plan
         </div>
-        <div style={{ fontSize: 13, color: T.muted }}>4 days/week · Push & Pull</div>
-      </div>
+        <div style={{ fontSize: 12, color: T.muted, letterSpacing: 1 }}>2026 Training Regime · Push & Pull</div>
 
-      {/* Bodyweight hero card */}
-      <Card style={{ marginBottom: 14, background: `linear-gradient(135deg,${T.card},${T.card2})` }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
-            <Label>Body Weight</Label>
+        {/* Bodyweight inline */}
+        <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Body Weight</div>
             {editingBw ? (
-              <input
-                autoFocus
-                value={bwDraft}
+              <input autoFocus value={bwDraft}
                 onChange={e => setBwDraft(e.target.value)}
                 onBlur={() => { setEditingBw(false); const n = parseFloat(bwDraft); if (!isNaN(n)) onBodyweightChange(n); else setBwDraft(String(bodyweight ?? "")); }}
                 onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
-                style={{ background: T.card2, border: `1px solid ${T.primary}`, borderRadius: 8, color: T.text, fontFamily: "'Outfit',sans-serif", fontSize: 36, fontWeight: 700, padding: "4px 10px", width: 120 }}
+                style={{ background: T.card2, border: `1px solid ${T.primary}`, borderRadius: 8, color: T.text, fontFamily: "'Outfit',sans-serif", fontSize: 32, fontWeight: 700, padding: "4px 10px", width: 120, outline: "none" }}
               />
             ) : (
               <div onClick={() => { setBwDraft(String(bodyweight ?? "")); setEditingBw(true); }} style={{ cursor: "pointer", display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span style={{ fontSize: 44, fontFamily: "'Outfit',sans-serif", fontWeight: 700, background: bodyweight ? `linear-gradient(135deg,${T.gradA},${T.gradB})` : "none", WebkitBackgroundClip: bodyweight ? "text" : "none", WebkitTextFillColor: bodyweight ? "transparent" : T.dim, color: bodyweight ? undefined : T.dim }}>
+                <span style={{ fontSize: 40, fontFamily: "'Outfit',sans-serif", fontWeight: 700, background: bodyweight ? `linear-gradient(135deg,${T.gradA},${T.gradB})` : "none", WebkitBackgroundClip: bodyweight ? "text" : "none", WebkitTextFillColor: bodyweight ? "transparent" : T.dim, color: bodyweight ? undefined : T.dim }}>
                   {bodyweight ?? "—"}
                 </span>
-                {bodyweight && <span style={{ fontSize: 16, color: T.muted }}>{unit}</span>}
+                {bodyweight && <span style={{ fontSize: 15, color: T.muted }}>{unit}</span>}
               </div>
             )}
-            {!bodyweight && <div style={{ fontSize: 11, color: T.dim, marginTop: 4 }}>tap to log your weight</div>}
+            {!bodyweight && <div style={{ fontSize: 11, color: T.dim, marginTop: 2 }}>tap to log</div>}
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Schedule</div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {["M","T","W","T","F","S","S"].map((d, i) => {
+                const active = [0,1,3,4].includes(i);
+                const isPush = [0,3].includes(i);
+                return (
+                  <div key={i} style={{ width: 26, height: 26, borderRadius: 6, background: active ? `${T.primary}22` : T.card2, border: `1px solid ${active ? T.primary + "88" : T.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: active ? 11 : 9, color: active ? T.primary : T.dim }}>{active ? (isPush ? "↑" : "↓") : d}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Schedule */}
-      <Card style={{ marginBottom: 14 }}>
-        <Label>Weekly Schedule</Label>
-        <div style={{ display: "flex", gap: 6 }}>
-          {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => {
-            const active = ["Mon","Tue","Thu","Fri"].includes(d);
-            const isPush = ["Mon","Thu"].includes(d);
-            return (
-              <div key={d} style={{ flex: 1, textAlign: "center" }}>
-                <div style={{ fontSize: 9, color: active ? T.primary : T.dim, marginBottom: 4, textTransform: "uppercase" }}>{d}</div>
-                <div style={{ height: 36, borderRadius: 10, background: active ? `${T.primary}18` : T.card2, border: `1px solid ${active ? T.primary + "66" : T.border}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
-                  {active ? (
-                    <>
-                      <span style={{ fontSize: 13 }}>{isPush ? "💪" : "🏋️"}</span>
-                      <span style={{ fontSize: 7, color: T.primary, letterSpacing: 0.5 }}>{isPush ? "PUSH" : "PULL"}</span>
-                    </>
-                  ) : (
-                    <span style={{ fontSize: 11, color: T.dim }}>·</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* Day summary */}
-      <Card>
-        <Label>Plan Summary</Label>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ padding: "0 16px" }}>
+        {/* Day summary */}
+        <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>This Week</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {DAYS.map(day => (
-            <div key={day.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 16 }}>{day.title === "Push" ? "💪" : "🏋️"}</span>
-              <div>
-                <div style={{ fontSize: 13, color: T.text, fontWeight: 500 }}>{day.label} — {day.title}</div>
-                <div style={{ fontSize: 11, color: T.muted }}>{day.day}</div>
+            <div key={day.id} style={{ background: T.card, borderRadius: 14, padding: "14px 16px", border: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: `${T.primary}18`, border: `1px solid ${T.primary}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ fontSize: 20 }}>{day.title === "Push" ? "💪" : "🏋️"}</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>{day.label} — {day.title}</div>
+                <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{day.day} · {day.exercises.length} exercises</div>
+              </div>
+              <div style={{ fontSize: 11, color: T.primary, fontFamily: "'Outfit',sans-serif", fontWeight: 600 }}>
+                {day.exercises.reduce((a, e) => a + e.sets, 0)} sets
               </div>
             </div>
           ))}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -617,15 +606,65 @@ function SettingsTab({ themeKey, setThemeKey, lightMode, setLightMode, unit, set
 }
 
 // ─── TOP HEADER ───────────────────────────────────────────────────────────────
-function TopHeader({ tab }) {
+function TopHeader({ tab, onSettingsOpen }) {
   const T = useT();
   const day = DAYS.find(d => d.id === tab);
-  const label = tab === "overview" ? "Overview" : tab === "settings" ? "Settings" : day ? `${day.label} · ${day.title}` : "";
+  const label = tab === "overview" ? "Forge" : tab === "timer" ? "Timer" : day ? `${day.label} · ${day.title}` : "";
   return (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, maxWidth: 480, margin: "0 auto", zIndex: 99, background: T.navBg, borderBottom: `1px solid ${T.border}`, padding: "14px 16px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <span style={{ fontSize: 15, fontFamily: "'Outfit',sans-serif", fontWeight: 600, color: T.text }}>{label}</span>
-      <div style={{ width: 8, height: 8, borderRadius: 4, background: T.primary, boxShadow: `0 0 8px ${T.primary}` }} />
+      <span style={{ fontSize: 16, fontFamily: tab === "overview" ? "'Playfair Display',serif" : "'Outfit',sans-serif", fontWeight: 700, background: tab === "overview" ? `linear-gradient(135deg,${T.gradA},${T.gradB})` : "none", WebkitBackgroundClip: tab === "overview" ? "text" : "none", WebkitTextFillColor: tab === "overview" ? "transparent" : T.text, color: tab === "overview" ? undefined : T.text }}>{label}</span>
+      <button onClick={onSettingsOpen} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: T.muted, fontSize: 18, lineHeight: 1 }}>⚙</button>
     </div>
+  );
+}
+
+// ─── SETTINGS DRAWER ──────────────────────────────────────────────────────────
+function SettingsDrawer({ open, onClose, themeKey, setThemeKey, lightMode, setLightMode, unit, setUnit, user, onSignOut, saveSettings }) {
+  const T = useT();
+  if (!open) return null;
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200 }} />
+      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "85%", maxWidth: 360, background: T.card, zIndex: 201, overflowY: "auto", padding: "24px 20px 40px", borderLeft: `1px solid ${T.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+          <div style={{ fontSize: 22, fontFamily: "'Playfair Display',serif", fontWeight: 700, color: T.text }}>Settings</div>
+          <button onClick={onClose} style={{ background: T.card2, border: `1px solid ${T.border}`, borderRadius: 8, color: T.muted, cursor: "pointer", fontSize: 14, padding: "6px 12px" }}>✕</button>
+        </div>
+
+        <div style={{ marginBottom: 6, fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase" }}>Theme</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          {Object.entries(THEMES).map(([k, v]) => (
+            <button key={k} onClick={() => { setThemeKey(k); saveSettings({ forge_theme: k }); }}
+              style={{ background: themeKey === k ? `${T.primary}22` : T.card2, border: `1px solid ${themeKey === k ? T.primary : T.border}`, borderRadius: 10, padding: "8px 12px", cursor: "pointer", color: themeKey === k ? T.primary : T.muted, fontFamily: "inherit", fontSize: 12 }}>
+              {v.emoji} {v.name}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: 6, fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase" }}>Appearance</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <span style={{ fontSize: 14, color: T.text }}>Light Mode</span>
+          <button onClick={() => { setLightMode(!lightMode); saveSettings({ forge_light_mode: !lightMode }); }}
+            style={{ width: 44, height: 24, borderRadius: 12, background: lightMode ? T.primary : T.card2, border: `1px solid ${T.border}`, cursor: "pointer", position: "relative", transition: "background .2s" }}>
+            <div style={{ width: 18, height: 18, borderRadius: 9, background: "#fff", position: "absolute", top: 3, left: lightMode ? 23 : 3, transition: "left .2s" }} />
+          </button>
+        </div>
+
+        <div style={{ marginBottom: 6, fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase" }}>Units</div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          {["kg", "lbs"].map(u => (
+            <button key={u} onClick={() => { setUnit(u); saveSettings({ units: u }); }}
+              style={{ flex: 1, background: unit === u ? `${T.primary}22` : T.card2, border: `1px solid ${unit === u ? T.primary : T.border}`, borderRadius: 10, color: unit === u ? T.primary : T.muted, cursor: "pointer", fontFamily: "inherit", fontSize: 14, padding: "10px 0" }}>
+              {u}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: 6, fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase" }}>Account</div>
+        <div style={{ fontSize: 13, color: T.muted, marginBottom: 12 }}>{user?.email}</div>
+        <button onClick={onSignOut} style={{ width: "100%", background: "transparent", border: `1px solid ${T.primary}`, borderRadius: 10, color: T.primary, cursor: "pointer", fontFamily: "inherit", fontSize: 14, padding: "11px 16px" }}>Sign Out</button>
+      </div>
+    </>
   );
 }
 
@@ -635,17 +674,16 @@ export default function WorkoutApp({ user, onSignOut }) {
   const [themeKey, setThemeKey] = useState("earth");
   const [lightMode, setLightMode] = useState(false);
   const [unit, setUnit] = useState("kg");
-  // weights: { [exerciseId]: number | null }
   const [weights, setWeights] = useState({});
   const [bodyweight, setBodyweight] = useState(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const T = applyMode(THEMES[themeKey] || THEMES.fire, lightMode);
+  const T = applyMode(THEMES[themeKey] || THEMES.earth, lightMode);
 
   const stateRef = useRef({ themeKey: "earth", lightMode: false, unit: "kg", weights: {}, bodyweight: null });
   stateRef.current = { themeKey, lightMode, unit, weights, bodyweight };
 
-  // Load settings
   useEffect(() => {
     if (!user) return;
     supabase.from('settings').select('*').eq('user_id', user.id).single()
@@ -696,38 +734,21 @@ export default function WorkoutApp({ user, onSignOut }) {
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Jost:wght@300;400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
         <style>{`*{box-sizing:border-box}input::placeholder{color:#4b5563}select{appearance:none}::-webkit-scrollbar{width:0}button{outline:none}`}</style>
 
-        <TopHeader tab={tab} />
+        <TopHeader tab={tab} onSettingsOpen={() => setSettingsOpen(true)} />
 
-        {tab === "overview" && (
-          <OverviewTab
-            weights={weights}
-            bodyweight={bodyweight}
-            onBodyweightChange={handleBodyweightChange}
-            unit={unit}
-          />
-        )}
-        {activeDay && (
-          <DayTab
-            day={activeDay}
-            weights={weights}
-            onWeightChange={handleWeightChange}
-            unit={unit}
-          />
-        )}
+        {tab === "overview" && <OverviewTab weights={weights} bodyweight={bodyweight} onBodyweightChange={handleBodyweightChange} unit={unit} />}
+        {activeDay && <DayTab day={activeDay} weights={weights} onWeightChange={handleWeightChange} unit={unit} />}
         {tab === "timer" && <TimerTab />}
-        {tab === "settings" && (
-          <SettingsTab
-            themeKey={themeKey}
-            setThemeKey={setThemeKey}
-            lightMode={lightMode}
-            setLightMode={setLightMode}
-            unit={unit}
-            setUnit={setUnit}
-            user={user}
-            onSignOut={onSignOut}
-            saveSettings={saveSettings}
-          />
-        )}
+
+        <SettingsDrawer
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          themeKey={themeKey} setThemeKey={setThemeKey}
+          lightMode={lightMode} setLightMode={setLightMode}
+          unit={unit} setUnit={setUnit}
+          user={user} onSignOut={onSignOut}
+          saveSettings={saveSettings}
+        />
 
         <BottomNav tab={tab} setTab={setTab} />
       </div>
