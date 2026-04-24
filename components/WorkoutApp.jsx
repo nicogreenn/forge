@@ -440,7 +440,7 @@ function SettingsTab({ themeKey, setThemeKey, lightMode, setLightMode, unit, set
         <Label>Theme</Label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {Object.entries(THEMES).map(([k, v]) => (
-            <button key={k} onClick={() => { setThemeKey(k); saveSettings({ theme: k }); }}
+            <button key={k} onClick={() => { setThemeKey(k); saveSettings({ forge_theme: k }); }}
               style={{ background: themeKey === k ? `${T.primary}22` : T.card2, border: `1px solid ${themeKey === k ? T.primary : T.border}`, borderRadius: 10, padding: "8px 12px", cursor: "pointer", color: themeKey === k ? T.primary : T.muted, fontFamily: "inherit", fontSize: 12 }}>
               {v.emoji} {v.name}
             </button>
@@ -452,7 +452,7 @@ function SettingsTab({ themeKey, setThemeKey, lightMode, setLightMode, unit, set
         <Label>Appearance</Label>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontSize: 14, color: T.text }}>Light Mode</span>
-          <button onClick={() => { setLightMode(!lightMode); saveSettings({ light_mode: !lightMode }); }}
+          <button onClick={() => { setLightMode(!lightMode); saveSettings({ forge_light_mode: !lightMode }); }}
             style={{ width: 44, height: 24, borderRadius: 12, background: lightMode ? T.primary : T.card2, border: `1px solid ${T.border}`, cursor: "pointer", position: "relative", transition: "background .2s" }}>
             <div style={{ width: 18, height: 18, borderRadius: 9, background: "#fff", position: "absolute", top: 3, left: lightMode ? 23 : 3, transition: "left .2s" }} />
           </button>
@@ -515,8 +515,8 @@ export default function WorkoutApp({ user, onSignOut }) {
     supabase.from('settings').select('*').eq('user_id', user.id).single()
       .then(({ data }) => {
         if (data) {
-          if (data.theme) setThemeKey(data.theme);
-          if (data.light_mode !== undefined) setLightMode(data.light_mode);
+          if (data.forge_theme) setThemeKey(data.forge_theme);
+          if (data.forge_light_mode !== undefined && data.forge_light_mode !== null) setLightMode(data.forge_light_mode);
           if (data.units) setUnit(data.units);
           if (data.weights_data) setWeights(data.weights_data);
           if (data.bodyweight !== undefined) setBodyweight(data.bodyweight);
@@ -528,7 +528,7 @@ export default function WorkoutApp({ user, onSignOut }) {
   const saveSettings = (patch) => {
     if (!user) return;
     const s = stateRef.current;
-    const full = { theme: s.themeKey, light_mode: s.lightMode, units: s.unit, weights_data: s.weights, bodyweight: s.bodyweight, ...patch };
+    const full = { forge_theme: s.themeKey, forge_light_mode: s.lightMode, units: s.unit, weights_data: s.weights, bodyweight: s.bodyweight, ...patch };
     supabase.from('settings').upsert({ user_id: user.id, ...full }, { onConflict: 'user_id' })
       .then(({ error }) => { if (error) console.error('Settings save error:', JSON.stringify(error)); });
   };
