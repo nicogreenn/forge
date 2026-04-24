@@ -549,7 +549,7 @@ function TopHeader({ tab }) {
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function WorkoutApp({ user, onSignOut }) {
   const [tab, setTab] = useState("overview");
-  const [themeKey, setThemeKey] = useState("fire");
+  const [themeKey, setThemeKey] = useState("earth");
   const [lightMode, setLightMode] = useState(false);
   const [unit, setUnit] = useState("kg");
   // weights: { [exerciseId]: number | null }
