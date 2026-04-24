@@ -559,10 +559,8 @@ export default function WorkoutApp({ user, onSignOut }) {
 
   const T = applyMode(THEMES[themeKey] || THEMES.fire, lightMode);
 
-  const settingsRef = useRef({});
-  useEffect(() => {
-    settingsRef.current = { theme: themeKey, light_mode: lightMode, units: unit, weights_data: weights, bodyweight };
-  }, [themeKey, lightMode, unit, weights, bodyweight]);
+  const stateRef = useRef({ themeKey: "earth", lightMode: false, unit: "kg", weights: {}, bodyweight: null });
+  stateRef.current = { themeKey, lightMode, unit, weights, bodyweight };
 
   // Load settings
   useEffect(() => {
@@ -582,7 +580,8 @@ export default function WorkoutApp({ user, onSignOut }) {
 
   const saveSettings = (patch) => {
     if (!user) return;
-    const full = { theme: themeKey, light_mode: lightMode, units: unit, weights_data: weights, bodyweight, ...patch };
+    const s = stateRef.current;
+    const full = { theme: s.themeKey, light_mode: s.lightMode, units: s.unit, weights_data: s.weights, bodyweight: s.bodyweight, ...patch };
     supabase.from('settings').upsert({ user_id: user.id, ...full }, { onConflict: 'user_id' })
       .then(({ error }) => { if (error) console.error('Settings save error:', JSON.stringify(error)); });
   };
