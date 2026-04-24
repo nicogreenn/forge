@@ -300,7 +300,7 @@ function WarmupSection({ expanded, onToggle }) {
 // ─── DAY TAB ──────────────────────────────────────────────────────────────────
 function DayTab({ day, weights, onWeightChange, unit }) {
   const T = useT();
-  const [warmupOpen, setWarmupOpen] = useState(true);
+  const [warmupOpen, setWarmupOpen] = useState(false);
   const [expandedEx, setExpandedEx] = useState(null);
   const isPush = day.title === "Push";
 
