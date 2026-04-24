@@ -35,34 +35,34 @@ export default function Page() {
   if (user) return <WorkoutApp user={user} onSignOut={() => supabase.auth.signOut()} />
 
   return (
-    <div style={{ background: '#111111', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Jost',sans-serif" }}>
+    <div style={{ background: '#0f0b08', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Jost',sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Jost:wght@300;400;500;600&family=Outfit:wght@400;700&display=swap" rel="stylesheet" />
       <div style={{ width: '100%', maxWidth: 360, padding: 24, boxSizing: 'border-box' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>🔥</div>
-          <div style={{ fontSize: 32, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: 'linear-gradient(135deg,#f97316,#facc15)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🌳</div>
+          <div style={{ fontSize: 32, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: 'linear-gradient(135deg,#c8854a,#e8b87a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Nico's Plan
           </div>
-          <div style={{ fontSize: 12, color: '#6b7280', letterSpacing: 3, textTransform: 'uppercase', marginTop: 4 }}>2026 Training Regime</div>
+          <div style={{ fontSize: 12, color: '#a08060', letterSpacing: 3, textTransform: 'uppercase', marginTop: 4 }}>2026 Training Regime</div>
         </div>
 
-        <div style={{ background: '#1c1c1c', borderRadius: 16, padding: 24, border: '1px solid #2a2a2a' }}>
+        <div style={{ background: '#1c1510', borderRadius: 16, padding: 24, border: '1px solid #3a2d1f' }}>
           <input
             type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-            style={{ width: '100%', boxSizing: 'border-box', background: '#242424', border: '1px solid #2a2a2a', borderRadius: 10, color: '#f5f5f5', fontFamily: 'inherit', fontSize: 14, padding: '12px 14px', marginBottom: 12, outline: 'none' }}
+            style={{ width: '100%', boxSizing: 'border-box', background: '#241c14', border: '1px solid #3a2d1f', borderRadius: 10, color: '#f5ede3', fontFamily: 'inherit', fontSize: 14, padding: '12px 14px', marginBottom: 12, outline: 'none' }}
           />
           <input
             type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            style={{ width: '100%', boxSizing: 'border-box', background: '#242424', border: '1px solid #2a2a2a', borderRadius: 10, color: '#f5f5f5', fontFamily: 'inherit', fontSize: 14, padding: '12px 14px', marginBottom: error ? 12 : 20, outline: 'none' }}
+            style={{ width: '100%', boxSizing: 'border-box', background: '#241c14', border: '1px solid #3a2d1f', borderRadius: 10, color: '#f5ede3', fontFamily: 'inherit', fontSize: 14, padding: '12px 14px', marginBottom: error ? 12 : 20, outline: 'none' }}
           />
-          {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 12 }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#e05a5a', marginBottom: 12 }}>{error}</div>}
           <button onClick={handleSubmit}
-            style={{ width: '100%', background: 'linear-gradient(135deg,#f97316,#facc1588)', border: '1px solid #f97316', borderRadius: 10, color: '#000', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '13px 16px', marginBottom: 12 }}>
+            style={{ width: '100%', background: 'linear-gradient(135deg,#c8854a,#e8b87a88)', border: '1px solid #c8854a', borderRadius: 10, color: '#000', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '13px 16px', marginBottom: 12 }}>
             {mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
           <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-            style={{ width: '100%', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>
+            style={{ width: '100%', background: 'none', border: 'none', color: '#a08060', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>
             {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>
         </div>
