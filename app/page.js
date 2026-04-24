@@ -40,8 +40,8 @@ export default function Page() {
       <div style={{ width: '100%', maxWidth: 360, padding: 24, boxSizing: 'border-box' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🌳</div>
-          <div style={{ fontSize: 32, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: 'linear-gradient(135deg,#c8854a,#e8b87a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Nico's Plan
+          <div style={{ fontSize: 36, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: 'linear-gradient(135deg,#c8854a,#e8b87a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Forge
           </div>
           <div style={{ fontSize: 12, color: '#a08060', letterSpacing: 3, textTransform: 'uppercase', marginTop: 4 }}>2026 Training Regime</div>
         </div>

@@ -582,7 +582,7 @@ export default function WorkoutApp({ user, onSignOut }) {
 
   const saveSettings = (patch) => {
     if (!user) return;
-    const full = { ...settingsRef.current, ...patch };
+    const full = { theme: themeKey, light_mode: lightMode, units: unit, weights_data: weights, bodyweight, ...patch };
     supabase.from('settings').upsert({ user_id: user.id, ...full }, { onConflict: 'user_id' })
       .then(({ error }) => { if (error) console.error('Settings save error:', JSON.stringify(error)); });
   };
@@ -600,8 +600,8 @@ export default function WorkoutApp({ user, onSignOut }) {
 
   if (loadingSettings) {
     return (
-      <div style={{ background: "#111", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ color: "#f97316", fontFamily: "'Outfit',sans-serif", fontSize: 14, letterSpacing: 2 }}>LOADING...</div>
+      <div style={{ background: "#0f0b08", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#c8854a", fontFamily: "'Outfit',sans-serif", fontSize: 14, letterSpacing: 2 }}>LOADING...</div>
       </div>
     );
   }
