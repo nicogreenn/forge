@@ -152,11 +152,12 @@ const Ring = ({ pct, size = 90, stroke = 8, color }) => {
 function BottomNav({ tab, setTab }) {
   const T = useT();
   const tabs = [
-    { id: "overview",  label: "Overview", icon: "◈" },
+    { id: "overview",  label: "Home",     icon: "◈" },
     { id: "day1",      label: "Mon",      icon: "①" },
     { id: "day2",      label: "Tue",      icon: "②" },
     { id: "day4",      label: "Thu",      icon: "③" },
     { id: "day5",      label: "Fri",      icon: "④" },
+    { id: "timer",     label: "Timer",    icon: "◷" },
     { id: "settings",  label: "Settings", icon: "◬" },
   ];
   return (
@@ -164,10 +165,10 @@ function BottomNav({ tab, setTab }) {
       {tabs.map(t => {
         const active = tab === t.id;
         return (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, background: "none", border: "none", padding: "10px 2px 12px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, position: "relative" }}>
+          <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, background: "none", border: "none", padding: "10px 1px 12px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, position: "relative" }}>
             {active && <div style={{ position: "absolute", top: 0, left: "15%", right: "15%", height: 2, background: `linear-gradient(90deg,${T.gradA},${T.gradB})`, borderRadius: "0 0 4px 4px", boxShadow: `0 0 10px ${T.primary}` }} />}
-            <span style={{ fontSize: 15, color: active ? T.primary : T.dim, transition: "color .2s" }}>{t.icon}</span>
-            <span style={{ fontSize: 8, letterSpacing: 0.5, color: active ? T.primary : T.dim, fontFamily: "'Outfit',sans-serif", textTransform: "uppercase" }}>{t.label}</span>
+            <span style={{ fontSize: 14, color: active ? T.primary : T.dim, transition: "color .2s" }}>{t.icon}</span>
+            <span style={{ fontSize: 7, letterSpacing: 0.3, color: active ? T.primary : T.dim, fontFamily: "'Outfit',sans-serif", textTransform: "uppercase" }}>{t.label}</span>
           </button>
         );
       })}
@@ -429,6 +430,141 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, unit }) {
   );
 }
 
+// ─── TIMER TAB ────────────────────────────────────────────────────────────────
+function TimerTab() {
+  const T = useT();
+  const PRESETS = [30, 60, 90, 120, 180];
+  const [duration, setDuration] = useState(90);
+  const [timeLeft, setTimeLeft] = useState(90);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const [customInput, setCustomInput] = useState("");
+  const [editingCustom, setEditingCustom] = useState(false);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (running) {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft(t => {
+          if (t <= 1) {
+            clearInterval(intervalRef.current);
+            setRunning(false);
+            setDone(true);
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [running]);
+
+  const start = () => { setDone(false); setRunning(true); };
+  const pause = () => setRunning(false);
+  const reset = () => { setRunning(false); setDone(false); setTimeLeft(duration); };
+  const setPreset = (s) => { setDuration(s); setTimeLeft(s); setRunning(false); setDone(false); };
+
+  const pct = duration > 0 ? (timeLeft / duration) * 100 : 0;
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  const ringSize = 240;
+  const stroke = 10;
+  const r = (ringSize - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  const ringColor = done ? T.green : timeLeft <= 10 ? T.red : T.primary;
+
+  return (
+    <div style={{ padding: "80px 16px 100px" }}>
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 11, color: T.muted, letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>Rest Period</div>
+        <div style={{ fontSize: 38, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: `linear-gradient(135deg,${T.gradA},${T.gradB})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.15 }}>
+          Timer
+        </div>
+      </div>
+
+      {/* Ring */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+        <div style={{ position: "relative", width: ringSize, height: ringSize }}>
+          <svg width={ringSize} height={ringSize} style={{ transform: "rotate(-90deg)" }}>
+            <circle cx={ringSize/2} cy={ringSize/2} r={r} fill="none" stroke={T.card2} strokeWidth={stroke} />
+            <circle cx={ringSize/2} cy={ringSize/2} r={r} fill="none" stroke={ringColor} strokeWidth={stroke}
+              strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+              style={{ filter: `drop-shadow(0 0 10px ${ringColor})`, transition: "stroke-dasharray .5s, stroke .3s" }} />
+          </svg>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+            {done ? (
+              <span style={{ fontSize: 48, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: T.green }}>Done!</span>
+            ) : (
+              <>
+                <span style={{ fontSize: 56, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: T.text, lineHeight: 1 }}>
+                  {String(mins).padStart(2,"0")}:{String(secs).padStart(2,"0")}
+                </span>
+                <span style={{ fontSize: 12, color: T.muted, letterSpacing: 2 }}>{duration}s total</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, justifyContent: "center" }}>
+        {!running ? (
+          <PrimaryBtn onClick={start} style={{ flex: 1, maxWidth: 160, fontSize: 16 }}>
+            {timeLeft === duration ? "Start" : "Resume"}
+          </PrimaryBtn>
+        ) : (
+          <PrimaryBtn onClick={pause} style={{ flex: 1, maxWidth: 160, fontSize: 16 }}>Pause</PrimaryBtn>
+        )}
+        <OutlineBtn onClick={reset} style={{ flex: 1, maxWidth: 160, fontSize: 16 }}>Reset</OutlineBtn>
+      </div>
+
+      {/* Presets */}
+      <Card style={{ marginBottom: 14 }}>
+        <Label>Quick Presets</Label>
+        <div style={{ display: "flex", gap: 8 }}>
+          {PRESETS.map(s => (
+            <button key={s} onClick={() => setPreset(s)}
+              style={{ flex: 1, background: duration === s ? `${T.primary}22` : T.card2, border: `1px solid ${duration === s ? T.primary : T.border}`, borderRadius: 10, color: duration === s ? T.primary : T.muted, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontSize: 12, fontWeight: 600, padding: "10px 0" }}>
+              {s >= 60 ? `${s/60}m` : `${s}s`}
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {/* Custom duration */}
+      <Card>
+        <Label>Custom Duration</Label>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {editingCustom ? (
+            <input
+              autoFocus
+              value={customInput}
+              onChange={e => setCustomInput(e.target.value)}
+              onBlur={() => {
+                setEditingCustom(false);
+                const n = parseInt(customInput);
+                if (!isNaN(n) && n > 0) setPreset(n);
+                setCustomInput("");
+              }}
+              onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
+              placeholder="seconds"
+              style={{ flex: 1, background: T.card2, border: `1px solid ${T.primary}`, borderRadius: 10, color: T.text, fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 700, padding: "10px 14px", outline: "none" }}
+            />
+          ) : (
+            <button onClick={() => setEditingCustom(true)}
+              style={{ flex: 1, background: T.card2, border: `1px solid ${T.border}`, borderRadius: 10, color: T.muted, cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontSize: 14, padding: "12px 14px", textAlign: "left" }}>
+              Enter custom seconds...
+            </button>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 // ─── SETTINGS TAB ─────────────────────────────────────────────────────────────
 function SettingsTab({ themeKey, setThemeKey, lightMode, setLightMode, unit, setUnit, user, onSignOut, saveSettings }) {
   const T = useT();
@@ -578,6 +714,7 @@ export default function WorkoutApp({ user, onSignOut }) {
             unit={unit}
           />
         )}
+        {tab === "timer" && <TimerTab />}
         {tab === "settings" && (
           <SettingsTab
             themeKey={themeKey}
