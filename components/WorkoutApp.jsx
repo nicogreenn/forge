@@ -431,6 +431,26 @@ function TimerTab() {
   const [editingCustom, setEditingCustom] = useState(false);
   const intervalRef = useRef(null);
 
+  const playDone = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const beeps = [880, 880, 1100];
+      beeps.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = "sine";
+        const start = ctx.currentTime + i * 0.22;
+        gain.gain.setValueAtTime(0.4, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+        osc.start(start);
+        osc.stop(start + 0.2);
+      });
+    } catch (e) {}
+  };
+
   useEffect(() => {
     if (running) {
       intervalRef.current = setInterval(() => {
@@ -439,6 +459,7 @@ function TimerTab() {
             clearInterval(intervalRef.current);
             setRunning(false);
             setDone(true);
+            playDone();
             return 0;
           }
           return t - 1;
