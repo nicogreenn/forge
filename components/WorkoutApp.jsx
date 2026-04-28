@@ -480,14 +480,17 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, height, onHeight
 }
 
 // ─── MEALS TAB ────────────────────────────────────────────────────────────────
-function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, todayLog, onToggleLog }) {
+function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, onEditRecipe, todayLog, onToggleLog }) {
   const T = useT();
   const [view, setView] = useState("log");
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(null); // recipe being edited
   const [expandedRecipe, setExpandedRecipe] = useState(null);
   const [logServings, setLogServings] = useState({});
   const [form, setForm] = useState({ name: "", calories: "", protein: "", servings: "1", ingredients: "" });
+  const [editForm, setEditForm] = useState({ name: "", calories: "", protein: "", servings: "1", ingredients: "" });
   const [ingredientInput, setIngredientInput] = useState("");
+  const [editIngredientInput, setEditIngredientInput] = useState("");
 
   const todayCals = todayLog.reduce((s, entry) => {
     const r = recipes.find(r => r.id === entry.id);
@@ -521,6 +524,24 @@ function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, todayLog, onToggleLog 
     setForm({ name: "", calories: "", protein: "", servings: "1", ingredients: "" });
     setIngredientInput("");
     setAdding(false);
+  };
+
+  const openEdit = (r) => {
+    setEditForm({ name: r.name, calories: String(r.calories), protein: String(r.protein), servings: String(r.servings ?? 1), ingredients: (r.ingredients ?? []).join("\n") });
+    setEditIngredientInput("");
+    setEditing(r);
+  };
+
+  const saveEdit = () => {
+    if (!editForm.name.trim()) return;
+    onEditRecipe({ ...editing, name: editForm.name, calories: Number(editForm.calories) || 0, protein: Number(editForm.protein) || 0, servings: Number(editForm.servings) || 1, ingredients: editForm.ingredients ? editForm.ingredients.split("\n").filter(Boolean) : [] });
+    setEditing(null);
+  };
+
+  const addEditIngredient = () => {
+    if (!editIngredientInput.trim()) return;
+    setEditForm(f => ({ ...f, ingredients: f.ingredients ? f.ingredients + "\n" + editIngredientInput.trim() : editIngredientInput.trim() }));
+    setEditIngredientInput("");
   };
 
   const getLogEntry = (id) => todayLog.find(e => e.id === id);
@@ -623,6 +644,8 @@ function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, todayLog, onToggleLog 
                       </div>
                     </div>
                     <span style={{ color: T.dim, fontSize: 12 }}>{expandedRecipe === r.id ? "▲" : "▼"}</span>
+                    <button onClick={e => { e.stopPropagation(); openEdit(r); }}
+                      style={{ background: T.card2, border: `1px solid ${T.border}`, borderRadius: 8, color: T.muted, fontSize: 12, padding: "5px 10px", cursor: "pointer" }}>Edit</button>
                     <button onClick={e => { e.stopPropagation(); onDeleteRecipe(r.id); }}
                       style={{ background: "none", border: "none", color: T.dim, fontSize: 18, cursor: "pointer", padding: "4px 6px" }}>✕</button>
                   </div>
@@ -694,11 +717,60 @@ function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, todayLog, onToggleLog 
           </div>
         </>
       )}
+      {/* Edit recipe modal */}
+      {editing && (
+        <>
+          <div onClick={() => setEditing(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200 }} />
+          <div style={{ position: "fixed", top: "5%", bottom: 0, left: 0, right: 0, maxWidth: 480, margin: "0 auto", background: T.card, borderRadius: "20px 20px 0 0", padding: "24px 20px 40px", zIndex: 201, overflowY: "auto" }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: T.text, marginBottom: 18, fontFamily: "'Playfair Display',serif" }}>Edit Recipe</div>
+
+            <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} placeholder="Recipe name" style={inputStyle} />
+            <div style={{ display: "flex", gap: 10 }}>
+              <input value={editForm.calories} onChange={e => setEditForm(f => ({ ...f, calories: e.target.value }))} placeholder="Total calories" type="number" style={{ ...inputStyle, flex: 1 }} />
+              <input value={editForm.protein} onChange={e => setEditForm(f => ({ ...f, protein: e.target.value }))} placeholder="Protein (g)" type="number" style={{ ...inputStyle, flex: 1 }} />
+            </div>
+
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: T.muted, marginBottom: 6 }}>Servings this recipe makes</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button onClick={() => setEditForm(f => ({ ...f, servings: String(Math.max(1, Number(f.servings) - 1)) }))}
+                  style={{ width: 36, height: 36, borderRadius: 10, background: T.card2, border: `1px solid ${T.border}`, color: T.text, fontSize: 18, cursor: "pointer" }}>−</button>
+                <span style={{ fontSize: 20, fontWeight: 700, color: T.primary, minWidth: 32, textAlign: "center" }}>{editForm.servings}</span>
+                <button onClick={() => setEditForm(f => ({ ...f, servings: String(Number(f.servings) + 1) }))}
+                  style={{ width: 36, height: 36, borderRadius: 10, background: T.primary, border: "none", color: "#000", fontSize: 18, cursor: "pointer" }}>+</button>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12, color: T.muted, marginBottom: 8, marginTop: 4 }}>Ingredients</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <input value={editIngredientInput} onChange={e => setEditIngredientInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") addEditIngredient(); }}
+                placeholder="e.g. 45g rolled oats"
+                style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+              <button onClick={addEditIngredient} style={{ background: T.primary, border: "none", borderRadius: 12, color: "#000", fontFamily: "inherit", fontSize: 13, fontWeight: 700, padding: "0 16px", cursor: "pointer" }}>Add</button>
+            </div>
+            {editForm.ingredients && (
+              <div style={{ background: T.card2, borderRadius: 12, padding: "10px 14px", marginBottom: 14 }}>
+                {editForm.ingredients.split("\n").filter(Boolean).map((ing, i) => (
+                  <div key={i} style={{ fontSize: 13, color: T.text, padding: "3px 0", display: "flex", justifyContent: "space-between" }}>
+                    <span>· {ing}</span>
+                    <button onClick={() => setEditForm(f => ({ ...f, ingredients: f.ingredients.split("\n").filter((_, j) => j !== i).join("\n") }))}
+                      style={{ background: "none", border: "none", color: T.dim, cursor: "pointer", fontSize: 14 }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button onClick={saveEdit}
+              style={{ width: "100%", background: `linear-gradient(135deg,${T.gradA},${T.gradB}88)`, border: `1px solid ${T.primary}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, fontWeight: 700, padding: "14px", cursor: "pointer" }}>
+              Save Changes
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
-
-// ─── TIMER TAB ────────────────────────────────────────────────────────────────
 function TimerTab() {
   const T = useT();
   const PRESETS = [30, 60, 90, 120, 180];
@@ -1028,7 +1100,11 @@ export default function WorkoutApp({ user, onSignOut }) {
     setRecipes(newRecipes);
     saveSettings({ recipes: newRecipes });
   };
-  const handleDeleteRecipe = (id) => {
+  const handleEditRecipe = (updated) => {
+    const newRecipes = recipes.map(r => r.id === updated.id ? updated : r);
+    setRecipes(newRecipes);
+    saveSettings({ recipes: newRecipes });
+  };
     const newRecipes = recipes.filter(r => r.id !== id);
     setRecipes(newRecipes);
     const newLog = todayLog.filter(lid => lid !== id);
@@ -1068,7 +1144,7 @@ export default function WorkoutApp({ user, onSignOut }) {
 
         {tab === "overview" && <OverviewTab weights={weights} bodyweight={bodyweight} onBodyweightChange={handleBodyweightChange} height={height} onHeightChange={handleHeightChange} unit={unit} todayLog={todayLog} recipes={recipes} />}
         {activeDay && <DayTab day={activeDay} weights={weights} onWeightChange={handleWeightChange} unit={unit} />}
-        {tab === "meals" && <MealsTab recipes={recipes} onAddRecipe={handleAddRecipe} onDeleteRecipe={handleDeleteRecipe} todayLog={todayLog} onToggleLog={handleToggleLog} user={user} />}
+        {tab === "meals" && <MealsTab recipes={recipes} onAddRecipe={handleAddRecipe} onDeleteRecipe={handleDeleteRecipe} onEditRecipe={handleEditRecipe} todayLog={todayLog} onToggleLog={handleToggleLog} />}
         {tab === "timer" && <TimerTab />}
 
         <SettingsDrawer
