@@ -157,6 +157,7 @@ function BottomNav({ tab, setTab }) {
     { id: "day2",     label: "Tue",   icon: "②" },
     { id: "day4",     label: "Thu",   icon: "③" },
     { id: "day5",     label: "Fri",   icon: "④" },
+    { id: "meals",    label: "Meals", icon: "🍽" },
     { id: "timer",    label: "Timer", icon: "◷" },
   ];
   return (
@@ -341,11 +342,23 @@ function DayTab({ day, weights, onWeightChange, unit }) {
 }
 
 // ─── OVERVIEW TAB ─────────────────────────────────────────────────────────────
-function OverviewTab({ weights, bodyweight, onBodyweightChange, unit }) {
+function OverviewTab({ weights, bodyweight, onBodyweightChange, height, onHeightChange, unit, todayLog, recipes }) {
   const T = useT();
   const [bwDraft, setBwDraft] = useState(String(bodyweight ?? ""));
   const [editingBw, setEditingBw] = useState(false);
+  const [htDraft, setHtDraft] = useState(String(height ?? ""));
+  const [editingHt, setEditingHt] = useState(false);
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+
+  const proteinTarget = bodyweight ? Math.round(bodyweight * 2) : null;
+  const todayCals = todayLog.reduce((sum, id) => {
+    const r = recipes.find(r => r.id === id);
+    return sum + (r?.calories ?? 0);
+  }, 0);
+  const todayProtein = todayLog.reduce((sum, id) => {
+    const r = recipes.find(r => r.id === id);
+    return sum + (r?.protein ?? 0);
+  }, 0);
 
   return (
     <div style={{ padding: "70px 0 100px" }}>
@@ -357,45 +370,88 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, unit }) {
         </div>
         <div style={{ fontSize: 12, color: T.muted, letterSpacing: 1 }}>2026 Training Regime · Push & Pull</div>
 
-        {/* Bodyweight inline */}
-        <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 14 }}>
+        {/* Body stats row */}
+        <div style={{ marginTop: 20, display: "flex", gap: 16 }}>
+          {/* Bodyweight */}
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Body Weight</div>
+            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Weight</div>
             {editingBw ? (
-              <input autoFocus value={bwDraft}
-                onChange={e => setBwDraft(e.target.value)}
+              <input autoFocus value={bwDraft} onChange={e => setBwDraft(e.target.value)}
                 onBlur={() => { setEditingBw(false); const n = parseFloat(bwDraft); if (!isNaN(n)) onBodyweightChange(n); else setBwDraft(String(bodyweight ?? "")); }}
                 onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
-                style={{ background: T.card2, border: `1px solid ${T.primary}`, borderRadius: 8, color: T.text, fontFamily: "'Outfit',sans-serif", fontSize: 32, fontWeight: 700, padding: "4px 10px", width: 120, outline: "none" }}
+                style={{ background: T.card2, border: `1px solid ${T.primary}`, borderRadius: 8, color: T.text, fontFamily: "'Outfit',sans-serif", fontSize: 28, fontWeight: 700, padding: "4px 10px", width: 100, outline: "none" }}
               />
             ) : (
-              <div onClick={() => { setBwDraft(String(bodyweight ?? "")); setEditingBw(true); }} style={{ cursor: "pointer", display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span style={{ fontSize: 40, fontFamily: "'Outfit',sans-serif", fontWeight: 700, background: bodyweight ? `linear-gradient(135deg,${T.gradA},${T.gradB})` : "none", WebkitBackgroundClip: bodyweight ? "text" : "none", WebkitTextFillColor: bodyweight ? "transparent" : T.dim, color: bodyweight ? undefined : T.dim }}>
+              <div onClick={() => { setBwDraft(String(bodyweight ?? "")); setEditingBw(true); }} style={{ cursor: "pointer", display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span style={{ fontSize: 36, fontFamily: "'Outfit',sans-serif", fontWeight: 700, background: bodyweight ? `linear-gradient(135deg,${T.gradA},${T.gradB})` : "none", WebkitBackgroundClip: bodyweight ? "text" : "none", WebkitTextFillColor: bodyweight ? "transparent" : T.dim, color: bodyweight ? undefined : T.dim }}>
                   {bodyweight ?? "—"}
                 </span>
-                {bodyweight && <span style={{ fontSize: 15, color: T.muted }}>{unit}</span>}
+                {bodyweight && <span style={{ fontSize: 13, color: T.muted }}>{unit}</span>}
               </div>
             )}
             {!bodyweight && <div style={{ fontSize: 11, color: T.dim, marginTop: 2 }}>tap to log</div>}
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Schedule</div>
-            <div style={{ display: "flex", gap: 4 }}>
-              {["M","T","W","T","F","S","S"].map((d, i) => {
-                const active = [0,1,3,4].includes(i);
-                const isPush = [0,3].includes(i);
-                return (
-                  <div key={i} style={{ width: 26, height: 26, borderRadius: 6, background: active ? `${T.primary}22` : T.card2, border: `1px solid ${active ? T.primary + "88" : T.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: active ? 11 : 9, color: active ? T.primary : T.dim }}>{active ? (isPush ? "↑" : "↓") : d}</span>
-                  </div>
-                );
-              })}
+
+          {/* Height */}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Height</div>
+            {editingHt ? (
+              <input autoFocus value={htDraft} onChange={e => setHtDraft(e.target.value)}
+                onBlur={() => { setEditingHt(false); const n = parseFloat(htDraft); if (!isNaN(n)) onHeightChange(n); else setHtDraft(String(height ?? "")); }}
+                onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
+                style={{ background: T.card2, border: `1px solid ${T.primary}`, borderRadius: 8, color: T.text, fontFamily: "'Outfit',sans-serif", fontSize: 28, fontWeight: 700, padding: "4px 10px", width: 100, outline: "none" }}
+              />
+            ) : (
+              <div onClick={() => { setHtDraft(String(height ?? "")); setEditingHt(true); }} style={{ cursor: "pointer", display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span style={{ fontSize: 36, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: height ? T.primary : T.dim }}>
+                  {height ?? "—"}
+                </span>
+                {height && <span style={{ fontSize: 13, color: T.muted }}>cm</span>}
+              </div>
+            )}
+            {!height && <div style={{ fontSize: 11, color: T.dim, marginTop: 2 }}>tap to log</div>}
+          </div>
+
+          {/* Protein target */}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Protein Target</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <span style={{ fontSize: 36, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: proteinTarget ? T.green : T.dim }}>
+                {proteinTarget ?? "—"}
+              </span>
+              {proteinTarget && <span style={{ fontSize: 13, color: T.muted }}>g/day</span>}
             </div>
+            {!proteinTarget && <div style={{ fontSize: 11, color: T.dim, marginTop: 2 }}>log weight</div>}
           </div>
         </div>
       </div>
 
       <div style={{ padding: "0 16px" }}>
+        {/* Today's nutrition */}
+        {(todayCals > 0 || todayProtein > 0) && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>Today's Nutrition</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1, background: T.card, borderRadius: 14, padding: "14px 16px", border: `1px solid ${T.border}`, textAlign: "center" }}>
+                <div style={{ fontSize: 26, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: T.primary }}>{todayCals}</div>
+                <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>kcal</div>
+              </div>
+              <div style={{ flex: 1, background: T.card, borderRadius: 14, padding: "14px 16px", border: `1px solid ${T.border}`, textAlign: "center" }}>
+                <div style={{ fontSize: 26, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: proteinTarget && todayProtein >= proteinTarget ? T.green : T.primary }}>{Math.round(todayProtein)}g</div>
+                <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>protein {proteinTarget ? `/ ${proteinTarget}g` : ""}</div>
+              </div>
+              {proteinTarget && (
+                <div style={{ flex: 1, background: T.card, borderRadius: 14, padding: "14px 16px", border: `1px solid ${T.border}`, textAlign: "center" }}>
+                  <div style={{ fontSize: 26, fontFamily: "'Outfit',sans-serif", fontWeight: 700, color: todayProtein >= proteinTarget ? T.green : T.red }}>
+                    {todayProtein >= proteinTarget ? "✓" : `${Math.round(proteinTarget - todayProtein)}g`}
+                  </div>
+                  <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{todayProtein >= proteinTarget ? "target hit" : "to go"}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Day summary */}
         <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>This Week</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -415,6 +471,181 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, unit }) {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── MEALS TAB ────────────────────────────────────────────────────────────────
+function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, todayLog, onToggleLog, user }) {
+  const T = useT();
+  const [view, setView] = useState("log"); // "log" | "recipes"
+  const [importing, setImporting] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  const [manual, setManual] = useState({ name: "", calories: "", protein: "" });
+
+  const parseRecipe = async () => {
+    if (!pasteText.trim()) return;
+    setParsing(true);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 200,
+          messages: [{ role: "user", content: `Extract the recipe name, total calories, and total protein in grams from this text. Reply ONLY with JSON like: {"name":"...","calories":420,"protein":34.5}\n\nText:\n${pasteText}` }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text ?? "";
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        onAddRecipe({ id: Date.now().toString(), name: parsed.name || "Recipe", calories: Number(parsed.calories) || 0, protein: Number(parsed.protein) || 0 });
+        setPasteText("");
+        setImporting(false);
+      }
+    } catch (e) { console.error(e); }
+    setParsing(false);
+  };
+
+  const addManual = () => {
+    if (!manual.name.trim()) return;
+    onAddRecipe({ id: Date.now().toString(), name: manual.name, calories: Number(manual.calories) || 0, protein: Number(manual.protein) || 0 });
+    setManual({ name: "", calories: "", protein: "" });
+    setManualMode(false);
+    setImporting(false);
+  };
+
+  const todayCals = todayLog.reduce((s, id) => s + (recipes.find(r => r.id === id)?.calories ?? 0), 0);
+  const todayProt = todayLog.reduce((s, id) => s + (recipes.find(r => r.id === id)?.protein ?? 0), 0);
+
+  return (
+    <div style={{ padding: "70px 0 100px" }}>
+      {/* Tab switcher */}
+      <div style={{ padding: "14px 16px 0", background: T.card, borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ fontSize: 28, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: `linear-gradient(135deg,${T.gradA},${T.gradB})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: 12 }}>Meals</div>
+        <div style={{ display: "flex", gap: 8, paddingBottom: 0 }}>
+          {[{ id: "log", label: "Today's Log" }, { id: "recipes", label: "My Recipes" }].map(v => (
+            <button key={v.id} onClick={() => setView(v.id)}
+              style={{ flex: 1, background: "none", border: "none", borderBottom: `2px solid ${view === v.id ? T.primary : "transparent"}`, color: view === v.id ? T.primary : T.muted, fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: view === v.id ? 700 : 400, padding: "8px 0 12px", cursor: "pointer", transition: "all .2s" }}>
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Today summary strip */}
+      {view === "log" && (
+        <div style={{ padding: "12px 16px", background: T.card2, borderBottom: `1px solid ${T.border}`, display: "flex", gap: 16 }}>
+          <div><span style={{ fontSize: 18, fontWeight: 700, color: T.primary, fontFamily: "'Outfit',sans-serif" }}>{todayCals}</span><span style={{ fontSize: 11, color: T.muted, marginLeft: 4 }}>kcal</span></div>
+          <div><span style={{ fontSize: 18, fontWeight: 700, color: T.green, fontFamily: "'Outfit',sans-serif" }}>{Math.round(todayProt)}g</span><span style={{ fontSize: 11, color: T.muted, marginLeft: 4 }}>protein</span></div>
+        </div>
+      )}
+
+      <div style={{ padding: "16px" }}>
+        {/* TODAY LOG */}
+        {view === "log" && (
+          <>
+            {recipes.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: T.muted, fontSize: 14 }}>Add recipes first to log meals</div>}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {recipes.map(r => {
+                const logged = todayLog.includes(r.id);
+                return (
+                  <div key={r.id} onClick={() => onToggleLog(r.id)}
+                    style={{ background: T.card, borderRadius: 14, padding: "14px 16px", border: `2px solid ${logged ? T.primary : T.border}`, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, transition: "border .2s" }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: logged ? T.primary : T.card2, border: `1.5px solid ${logged ? T.primary : T.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .2s" }}>
+                      {logged && <span style={{ fontSize: 14, color: "#000" }}>✓</span>}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>{r.name}</div>
+                      <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{r.calories} kcal · {r.protein}g protein</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Quick add manual meal */}
+            <div style={{ marginTop: 16 }}>
+              <button onClick={() => { setImporting(true); setManualMode(true); }}
+                style={{ width: "100%", background: T.card, border: `1px dashed ${T.border}`, borderRadius: 14, color: T.muted, fontFamily: "inherit", fontSize: 14, padding: "14px", cursor: "pointer" }}>
+                + Add a meal manually
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* RECIPES */}
+        {view === "recipes" && (
+          <>
+            <button onClick={() => { setImporting(true); setManualMode(false); }}
+              style={{ width: "100%", background: `linear-gradient(135deg,${T.gradA},${T.gradB}88)`, border: `1px solid ${T.primary}`, borderRadius: 14, color: T.text, fontFamily: "inherit", fontSize: 14, fontWeight: 700, padding: "14px", cursor: "pointer", marginBottom: 14 }}>
+              + Import or Add Recipe
+            </button>
+            {recipes.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: T.muted, fontSize: 14 }}>No recipes yet — import one to get started</div>}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {recipes.map(r => (
+                <div key={r.id} style={{ background: T.card, borderRadius: 14, padding: "14px 16px", border: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>{r.name}</div>
+                    <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{r.calories} kcal · {r.protein}g protein</div>
+                  </div>
+                  <button onClick={() => onDeleteRecipe(r.id)} style={{ background: "none", border: "none", color: T.dim, fontSize: 18, cursor: "pointer", padding: "4px 8px" }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Import modal */}
+      {importing && (
+        <>
+          <div onClick={() => { setImporting(false); setManualMode(false); setPasteText(""); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200 }} />
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, maxWidth: 480, margin: "0 auto", background: T.card, borderRadius: "20px 20px 0 0", padding: "24px 20px 40px", zIndex: 201 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: T.text, marginBottom: 16, fontFamily: "'Playfair Display',serif" }}>
+              {manualMode ? "Add Meal" : "Import Recipe"}
+            </div>
+
+            {!manualMode && (
+              <>
+                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                  <button onClick={() => setManualMode(false)} style={{ flex: 1, background: !manualMode ? `${T.primary}22` : T.card2, border: `1px solid ${!manualMode ? T.primary : T.border}`, borderRadius: 10, color: !manualMode ? T.primary : T.muted, fontFamily: "inherit", fontSize: 13, padding: "8px 0", cursor: "pointer" }}>Paste Recipe Text</button>
+                  <button onClick={() => setManualMode(true)} style={{ flex: 1, background: T.card2, border: `1px solid ${T.border}`, borderRadius: 10, color: T.muted, fontFamily: "inherit", fontSize: 13, padding: "8px 0", cursor: "pointer" }}>Enter Manually</button>
+                </div>
+                <textarea value={pasteText} onChange={e => setPasteText(e.target.value)}
+                  placeholder="Paste your recipe text here — the AI will read the name, calories and protein automatically..."
+                  style={{ width: "100%", boxSizing: "border-box", background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 13, padding: "12px 14px", outline: "none", minHeight: 120, resize: "none", lineHeight: 1.5 }}
+                />
+                <button onClick={parseRecipe} disabled={parsing || !pasteText.trim()}
+                  style={{ width: "100%", marginTop: 12, background: parsing ? T.card2 : `linear-gradient(135deg,${T.gradA},${T.gradB}88)`, border: `1px solid ${T.primary}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, fontWeight: 700, padding: "14px", cursor: parsing ? "default" : "pointer" }}>
+                  {parsing ? "Reading recipe..." : "Import Recipe"}
+                </button>
+              </>
+            )}
+
+            {manualMode && (
+              <>
+                <input value={manual.name} onChange={e => setManual(p => ({ ...p, name: e.target.value }))} placeholder="Meal name"
+                  style={{ width: "100%", boxSizing: "border-box", background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, padding: "12px 14px", outline: "none", marginBottom: 10 }} />
+                <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+                  <input value={manual.calories} onChange={e => setManual(p => ({ ...p, calories: e.target.value }))} placeholder="Calories (kcal)" type="number"
+                    style={{ flex: 1, background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, padding: "12px 14px", outline: "none" }} />
+                  <input value={manual.protein} onChange={e => setManual(p => ({ ...p, protein: e.target.value }))} placeholder="Protein (g)" type="number"
+                    style={{ flex: 1, background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, padding: "12px 14px", outline: "none" }} />
+                </div>
+                <button onClick={addManual}
+                  style={{ width: "100%", background: `linear-gradient(135deg,${T.gradA},${T.gradB}88)`, border: `1px solid ${T.primary}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, fontWeight: 700, padding: "14px", cursor: "pointer" }}>
+                  Add Meal
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -630,7 +861,7 @@ function SettingsTab({ themeKey, setThemeKey, lightMode, setLightMode, unit, set
 function TopHeader({ tab, onSettingsOpen }) {
   const T = useT();
   const day = DAYS.find(d => d.id === tab);
-  const label = tab === "overview" ? "Forge" : tab === "timer" ? "Timer" : day ? `${day.label} · ${day.title}` : "";
+  const label = tab === "overview" ? "Forge" : tab === "timer" ? "Timer" : tab === "meals" ? "Meals" : day ? `${day.label} · ${day.title}` : "";
   return (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, maxWidth: 480, margin: "0 auto", zIndex: 99, background: T.navBg, borderBottom: `1px solid ${T.border}`, padding: "14px 16px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <span style={{ fontSize: 16, fontFamily: tab === "overview" ? "'Playfair Display',serif" : "'Outfit',sans-serif", fontWeight: 700, background: tab === "overview" ? `linear-gradient(135deg,${T.gradA},${T.gradB})` : "none", WebkitBackgroundClip: tab === "overview" ? "text" : "none", WebkitTextFillColor: tab === "overview" ? "transparent" : T.text, color: tab === "overview" ? undefined : T.text }}>{label}</span>
@@ -697,13 +928,18 @@ export default function WorkoutApp({ user, onSignOut }) {
   const [unit, setUnit] = useState("kg");
   const [weights, setWeights] = useState({});
   const [bodyweight, setBodyweight] = useState(null);
+  const [height, setHeight] = useState(null);
+  const [recipes, setRecipes] = useState([]);
+  const [todayLog, setTodayLog] = useState([]);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const T = applyMode(THEMES[themeKey] || THEMES.earth, lightMode);
 
-  const stateRef = useRef({ themeKey: "earth", lightMode: false, unit: "kg", weights: {}, bodyweight: null });
-  stateRef.current = { themeKey, lightMode, unit, weights, bodyweight };
+  const stateRef = useRef({ themeKey: "earth", lightMode: false, unit: "kg", weights: {}, bodyweight: null, height: null, recipes: [], todayLog: [] });
+  stateRef.current = { themeKey, lightMode, unit, weights, bodyweight, height, recipes, todayLog };
+
+  const todayKey = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     if (!user) return;
@@ -715,6 +951,9 @@ export default function WorkoutApp({ user, onSignOut }) {
           if (data.units) setUnit(data.units);
           if (data.weights_data) setWeights(data.weights_data);
           if (data.bodyweight !== undefined) setBodyweight(data.bodyweight);
+          if (data.height !== undefined) setHeight(data.height);
+          if (data.recipes) setRecipes(data.recipes);
+          if (data.meal_logs?.[todayKey]) setTodayLog(data.meal_logs[todayKey]);
         }
         setLoadingSettings(false);
       });
@@ -723,7 +962,7 @@ export default function WorkoutApp({ user, onSignOut }) {
   const saveSettings = (patch) => {
     if (!user) return;
     const s = stateRef.current;
-    const full = { forge_theme: s.themeKey, forge_light_mode: s.lightMode, units: s.unit, weights_data: s.weights, bodyweight: s.bodyweight, ...patch };
+    const full = { forge_theme: s.themeKey, forge_light_mode: s.lightMode, units: s.unit, weights_data: s.weights, bodyweight: s.bodyweight, height: s.height, recipes: s.recipes, ...patch };
     supabase.from('settings').upsert({ user_id: user.id, ...full }, { onConflict: 'user_id' })
       .then(({ error }) => { if (error) console.error('Settings save error:', JSON.stringify(error)); });
   };
@@ -733,10 +972,31 @@ export default function WorkoutApp({ user, onSignOut }) {
     setWeights(newWeights);
     saveSettings({ weights_data: newWeights });
   };
+  const handleBodyweightChange = (value) => { setBodyweight(value); saveSettings({ bodyweight: value }); };
+  const handleHeightChange = (value) => { setHeight(value); saveSettings({ height: value }); };
 
-  const handleBodyweightChange = (value) => {
-    setBodyweight(value);
-    saveSettings({ bodyweight: value });
+  const handleAddRecipe = (recipe) => {
+    const newRecipes = [...recipes, recipe];
+    setRecipes(newRecipes);
+    saveSettings({ recipes: newRecipes });
+  };
+  const handleDeleteRecipe = (id) => {
+    const newRecipes = recipes.filter(r => r.id !== id);
+    setRecipes(newRecipes);
+    const newLog = todayLog.filter(lid => lid !== id);
+    setTodayLog(newLog);
+    saveSettings({ recipes: newRecipes });
+  };
+  const handleToggleLog = (id) => {
+    const newLog = todayLog.includes(id) ? todayLog.filter(l => l !== id) : [...todayLog, id];
+    setTodayLog(newLog);
+    // Save meal logs keyed by date
+    supabase.from('settings').select('meal_logs').eq('user_id', user.id).single()
+      .then(({ data }) => {
+        const existing = data?.meal_logs ?? {};
+        const updated = { ...existing, [todayKey]: newLog };
+        supabase.from('settings').upsert({ user_id: user.id, meal_logs: updated }, { onConflict: 'user_id' });
+      });
   };
 
   if (loadingSettings) {
@@ -757,8 +1017,9 @@ export default function WorkoutApp({ user, onSignOut }) {
 
         <TopHeader tab={tab} onSettingsOpen={() => setSettingsOpen(true)} />
 
-        {tab === "overview" && <OverviewTab weights={weights} bodyweight={bodyweight} onBodyweightChange={handleBodyweightChange} unit={unit} />}
+        {tab === "overview" && <OverviewTab weights={weights} bodyweight={bodyweight} onBodyweightChange={handleBodyweightChange} height={height} onHeightChange={handleHeightChange} unit={unit} todayLog={todayLog} recipes={recipes} />}
         {activeDay && <DayTab day={activeDay} weights={weights} onWeightChange={handleWeightChange} unit={unit} />}
+        {tab === "meals" && <MealsTab recipes={recipes} onAddRecipe={handleAddRecipe} onDeleteRecipe={handleDeleteRecipe} todayLog={todayLog} onToggleLog={handleToggleLog} user={user} />}
         {tab === "timer" && <TimerTab />}
 
         <SettingsDrawer
