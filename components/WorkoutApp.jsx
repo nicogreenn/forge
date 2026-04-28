@@ -1111,6 +1111,12 @@ export default function WorkoutApp({ user, onSignOut }) {
     setRecipes(newRecipes);
     saveSettings({ recipes: newRecipes });
   };
+
+  const handleDeleteRecipe = (id) => {
+    const newRecipes = recipes.filter(r => r.id !== id);
+    setRecipes(newRecipes);
+    saveSettings({ recipes: newRecipes });
+  };
     const newRecipes = recipes.filter(r => r.id !== id);
     setRecipes(newRecipes);
     const newLog = todayLog.filter(lid => lid !== id);
