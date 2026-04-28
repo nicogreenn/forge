@@ -351,13 +351,17 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, height, onHeight
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
   const proteinTarget = bodyweight ? Math.round(bodyweight * 2) : null;
-  const todayCals = todayLog.reduce((sum, id) => {
-    const r = recipes.find(r => r.id === id);
-    return sum + (r?.calories ?? 0);
+  const todayCals = todayLog.reduce((sum, entry) => {
+    const r = recipes.find(r => r.id === entry.id);
+    if (!r) return sum;
+    const perServing = r.servings > 0 ? r.calories / r.servings : r.calories;
+    return sum + Math.round(perServing * (entry.servings ?? 1));
   }, 0);
-  const todayProtein = todayLog.reduce((sum, id) => {
-    const r = recipes.find(r => r.id === id);
-    return sum + (r?.protein ?? 0);
+  const todayProtein = todayLog.reduce((sum, entry) => {
+    const r = recipes.find(r => r.id === entry.id);
+    if (!r) return sum;
+    const perServing = r.servings > 0 ? r.protein / r.servings : r.protein;
+    return sum + perServing * (entry.servings ?? 1);
   }, 0);
 
   return (
@@ -476,124 +480,160 @@ function OverviewTab({ weights, bodyweight, onBodyweightChange, height, onHeight
 }
 
 // ─── MEALS TAB ────────────────────────────────────────────────────────────────
-function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, todayLog, onToggleLog, user }) {
+function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, todayLog, onToggleLog }) {
   const T = useT();
-  const [view, setView] = useState("log"); // "log" | "recipes"
-  const [importing, setImporting] = useState(false);
-  const [pasteText, setPasteText] = useState("");
-  const [parsing, setParsing] = useState(false);
-  const [manualMode, setManualMode] = useState(false);
-  const [manual, setManual] = useState({ name: "", calories: "", protein: "" });
+  const [view, setView] = useState("log");
+  const [adding, setAdding] = useState(false);
+  const [expandedRecipe, setExpandedRecipe] = useState(null);
+  const [logServings, setLogServings] = useState({});
+  const [form, setForm] = useState({ name: "", calories: "", protein: "", servings: "1", ingredients: "" });
+  const [ingredientInput, setIngredientInput] = useState("");
 
-  const parseRecipe = async () => {
-    if (!pasteText.trim()) return;
-    setParsing(true);
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 200,
-          messages: [{ role: "user", content: `Extract the recipe name, total calories, and total protein in grams from this text. Reply ONLY with JSON like: {"name":"...","calories":420,"protein":34.5}\n\nText:\n${pasteText}` }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.[0]?.text ?? "";
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        onAddRecipe({ id: Date.now().toString(), name: parsed.name || "Recipe", calories: Number(parsed.calories) || 0, protein: Number(parsed.protein) || 0 });
-        setPasteText("");
-        setImporting(false);
-      }
-    } catch (e) { console.error(e); }
-    setParsing(false);
+  const todayCals = todayLog.reduce((s, entry) => {
+    const r = recipes.find(r => r.id === entry.id);
+    if (!r) return s;
+    const perServing = r.servings > 0 ? r.calories / r.servings : r.calories;
+    return s + Math.round(perServing * entry.servings);
+  }, 0);
+  const todayProt = todayLog.reduce((s, entry) => {
+    const r = recipes.find(r => r.id === entry.id);
+    if (!r) return s;
+    const perServing = r.servings > 0 ? r.protein / r.servings : r.protein;
+    return s + perServing * entry.servings;
+  }, 0);
+
+  const addIngredient = () => {
+    if (!ingredientInput.trim()) return;
+    setForm(f => ({ ...f, ingredients: f.ingredients ? f.ingredients + "\n" + ingredientInput.trim() : ingredientInput.trim() }));
+    setIngredientInput("");
   };
 
-  const addManual = () => {
-    if (!manual.name.trim()) return;
-    onAddRecipe({ id: Date.now().toString(), name: manual.name, calories: Number(manual.calories) || 0, protein: Number(manual.protein) || 0 });
-    setManual({ name: "", calories: "", protein: "" });
-    setManualMode(false);
-    setImporting(false);
+  const addRecipe = () => {
+    if (!form.name.trim()) return;
+    onAddRecipe({
+      id: Date.now().toString(),
+      name: form.name,
+      calories: Number(form.calories) || 0,
+      protein: Number(form.protein) || 0,
+      servings: Number(form.servings) || 1,
+      ingredients: form.ingredients ? form.ingredients.split("\n").filter(Boolean) : [],
+    });
+    setForm({ name: "", calories: "", protein: "", servings: "1", ingredients: "" });
+    setIngredientInput("");
+    setAdding(false);
   };
 
-  const todayCals = todayLog.reduce((s, id) => s + (recipes.find(r => r.id === id)?.calories ?? 0), 0);
-  const todayProt = todayLog.reduce((s, id) => s + (recipes.find(r => r.id === id)?.protein ?? 0), 0);
+  const getLogEntry = (id) => todayLog.find(e => e.id === id);
+  const toggleLog = (recipe) => {
+    const existing = getLogEntry(recipe.id);
+    if (existing) {
+      onToggleLog(recipe.id, null); // remove
+    } else {
+      onToggleLog(recipe.id, logServings[recipe.id] ?? 1); // add with servings
+    }
+  };
+
+  const inputStyle = { width: "100%", boxSizing: "border-box", background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 14, padding: "12px 14px", outline: "none", marginBottom: 10 };
 
   return (
     <div style={{ padding: "70px 0 100px" }}>
-      {/* Tab switcher */}
       <div style={{ padding: "14px 16px 0", background: T.card, borderBottom: `1px solid ${T.border}` }}>
         <div style={{ fontSize: 28, fontFamily: "'Playfair Display',serif", fontWeight: 700, background: `linear-gradient(135deg,${T.gradA},${T.gradB})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: 12 }}>Meals</div>
-        <div style={{ display: "flex", gap: 8, paddingBottom: 0 }}>
+        <div style={{ display: "flex" }}>
           {[{ id: "log", label: "Today's Log" }, { id: "recipes", label: "My Recipes" }].map(v => (
             <button key={v.id} onClick={() => setView(v.id)}
-              style={{ flex: 1, background: "none", border: "none", borderBottom: `2px solid ${view === v.id ? T.primary : "transparent"}`, color: view === v.id ? T.primary : T.muted, fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: view === v.id ? 700 : 400, padding: "8px 0 12px", cursor: "pointer", transition: "all .2s" }}>
+              style={{ flex: 1, background: "none", border: "none", borderBottom: `2px solid ${view === v.id ? T.primary : "transparent"}`, color: view === v.id ? T.primary : T.muted, fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: view === v.id ? 700 : 400, padding: "8px 0 12px", cursor: "pointer" }}>
               {v.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Today summary strip */}
       {view === "log" && (
-        <div style={{ padding: "12px 16px", background: T.card2, borderBottom: `1px solid ${T.border}`, display: "flex", gap: 16 }}>
-          <div><span style={{ fontSize: 18, fontWeight: 700, color: T.primary, fontFamily: "'Outfit',sans-serif" }}>{todayCals}</span><span style={{ fontSize: 11, color: T.muted, marginLeft: 4 }}>kcal</span></div>
-          <div><span style={{ fontSize: 18, fontWeight: 700, color: T.green, fontFamily: "'Outfit',sans-serif" }}>{Math.round(todayProt)}g</span><span style={{ fontSize: 11, color: T.muted, marginLeft: 4 }}>protein</span></div>
+        <div style={{ padding: "12px 16px", background: T.card2, borderBottom: `1px solid ${T.border}`, display: "flex", gap: 20 }}>
+          <div><span style={{ fontSize: 20, fontWeight: 700, color: T.primary, fontFamily: "'Outfit',sans-serif" }}>{todayCals}</span><span style={{ fontSize: 11, color: T.muted, marginLeft: 4 }}>kcal</span></div>
+          <div><span style={{ fontSize: 20, fontWeight: 700, color: T.green, fontFamily: "'Outfit',sans-serif" }}>{Math.round(todayProt)}g</span><span style={{ fontSize: 11, color: T.muted, marginLeft: 4 }}>protein</span></div>
         </div>
       )}
 
-      <div style={{ padding: "16px" }}>
+      <div style={{ padding: 16 }}>
         {/* TODAY LOG */}
         {view === "log" && (
           <>
-            {recipes.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: T.muted, fontSize: 14 }}>Add recipes first to log meals</div>}
+            {recipes.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: T.muted, fontSize: 14 }}>Add recipes first then log what you ate</div>}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {recipes.map(r => {
-                const logged = todayLog.includes(r.id);
+                const entry = getLogEntry(r.id);
+                const logged = !!entry;
+                const servings = logServings[r.id] ?? 1;
+                const perServing = r.servings > 0 ? r.calories / r.servings : r.calories;
+                const perServingProt = r.servings > 0 ? r.protein / r.servings : r.protein;
                 return (
-                  <div key={r.id} onClick={() => onToggleLog(r.id)}
-                    style={{ background: T.card, borderRadius: 14, padding: "14px 16px", border: `2px solid ${logged ? T.primary : T.border}`, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, transition: "border .2s" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: logged ? T.primary : T.card2, border: `1.5px solid ${logged ? T.primary : T.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .2s" }}>
-                      {logged && <span style={{ fontSize: 14, color: "#000" }}>✓</span>}
+                  <div key={r.id} style={{ background: T.card, borderRadius: 14, padding: "14px 16px", border: `2px solid ${logged ? T.primary : T.border}`, transition: "border .2s" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div onClick={() => toggleLog(r)}
+                        style={{ width: 28, height: 28, borderRadius: 8, background: logged ? T.primary : T.card2, border: `1.5px solid ${logged ? T.primary : T.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", transition: "all .2s" }}>
+                        {logged && <span style={{ fontSize: 14, color: "#000" }}>✓</span>}
+                      </div>
+                      <div style={{ flex: 1, cursor: "pointer" }} onClick={() => toggleLog(r)}>
+                        <div style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>{r.name}</div>
+                        <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>
+                          {Math.round(perServing * servings)} kcal · {Math.round(perServingProt * servings)}g protein
+                          {r.servings > 1 && ` · ${servings} serving${servings !== 1 ? "s" : ""}`}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>{r.name}</div>
-                      <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{r.calories} kcal · {r.protein}g protein</div>
-                    </div>
+                    {/* Servings picker */}
+                    {r.servings > 1 && (
+                      <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 12, color: T.muted }}>Servings:</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <button onClick={() => setLogServings(p => ({ ...p, [r.id]: Math.max(0.5, (p[r.id] ?? 1) - 0.5) }))}
+                            style={{ width: 30, height: 30, borderRadius: 8, background: T.card2, border: `1px solid ${T.border}`, color: T.text, fontSize: 16, cursor: "pointer" }}>−</button>
+                          <span style={{ fontSize: 15, fontWeight: 700, color: T.primary, minWidth: 24, textAlign: "center" }}>{logServings[r.id] ?? 1}</span>
+                          <button onClick={() => setLogServings(p => ({ ...p, [r.id]: (p[r.id] ?? 1) + 0.5 }))}
+                            style={{ width: 30, height: 30, borderRadius: 8, background: T.primary, border: "none", color: "#000", fontSize: 16, cursor: "pointer" }}>+</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
-
-            {/* Quick add manual meal */}
-            <div style={{ marginTop: 16 }}>
-              <button onClick={() => { setImporting(true); setManualMode(true); }}
-                style={{ width: "100%", background: T.card, border: `1px dashed ${T.border}`, borderRadius: 14, color: T.muted, fontFamily: "inherit", fontSize: 14, padding: "14px", cursor: "pointer" }}>
-                + Add a meal manually
-              </button>
-            </div>
           </>
         )}
 
-        {/* RECIPES */}
+        {/* MY RECIPES */}
         {view === "recipes" && (
           <>
-            <button onClick={() => { setImporting(true); setManualMode(false); }}
+            <button onClick={() => setAdding(true)}
               style={{ width: "100%", background: `linear-gradient(135deg,${T.gradA},${T.gradB}88)`, border: `1px solid ${T.primary}`, borderRadius: 14, color: T.text, fontFamily: "inherit", fontSize: 14, fontWeight: 700, padding: "14px", cursor: "pointer", marginBottom: 14 }}>
-              + Import or Add Recipe
+              + Add Recipe
             </button>
-            {recipes.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: T.muted, fontSize: 14 }}>No recipes yet — import one to get started</div>}
+            {recipes.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: T.muted, fontSize: 14 }}>No recipes yet</div>}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {recipes.map(r => (
-                <div key={r.id} style={{ background: T.card, borderRadius: 14, padding: "14px 16px", border: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>{r.name}</div>
-                    <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{r.calories} kcal · {r.protein}g protein</div>
+                <div key={r.id} style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, overflow: "hidden" }}>
+                  <div onClick={() => setExpandedRecipe(expandedRecipe === r.id ? null : r.id)}
+                    style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>{r.name}</div>
+                      <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>
+                        {r.calories} kcal · {r.protein}g protein · {r.servings} serving{r.servings !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                    <span style={{ color: T.dim, fontSize: 12 }}>{expandedRecipe === r.id ? "▲" : "▼"}</span>
+                    <button onClick={e => { e.stopPropagation(); onDeleteRecipe(r.id); }}
+                      style={{ background: "none", border: "none", color: T.dim, fontSize: 18, cursor: "pointer", padding: "4px 6px" }}>✕</button>
                   </div>
-                  <button onClick={() => onDeleteRecipe(r.id)} style={{ background: "none", border: "none", color: T.dim, fontSize: 18, cursor: "pointer", padding: "4px 8px" }}>✕</button>
+                  {expandedRecipe === r.id && r.ingredients?.length > 0 && (
+                    <div style={{ padding: "0 16px 14px", borderTop: `1px solid ${T.border}` }}>
+                      <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", margin: "12px 0 8px" }}>Ingredients</div>
+                      {r.ingredients.map((ing, i) => (
+                        <div key={i} style={{ fontSize: 13, color: T.text, padding: "4px 0", borderBottom: i < r.ingredients.length - 1 ? `1px solid ${T.border}` : "none" }}>· {ing}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -601,48 +641,56 @@ function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, todayLog, onToggleLog,
         )}
       </div>
 
-      {/* Import modal */}
-      {importing && (
+      {/* Add recipe modal */}
+      {adding && (
         <>
-          <div onClick={() => { setImporting(false); setManualMode(false); setPasteText(""); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200 }} />
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, maxWidth: 480, margin: "0 auto", background: T.card, borderRadius: "20px 20px 0 0", padding: "24px 20px 40px", zIndex: 201 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: T.text, marginBottom: 16, fontFamily: "'Playfair Display',serif" }}>
-              {manualMode ? "Add Meal" : "Import Recipe"}
+          <div onClick={() => setAdding(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200 }} />
+          <div style={{ position: "fixed", top: "5%", bottom: 0, left: 0, right: 0, maxWidth: 480, margin: "0 auto", background: T.card, borderRadius: "20px 20px 0 0", padding: "24px 20px 40px", zIndex: 201, overflowY: "auto" }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: T.text, marginBottom: 18, fontFamily: "'Playfair Display',serif" }}>Add Recipe</div>
+
+            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Recipe name" style={inputStyle} />
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <input value={form.calories} onChange={e => setForm(f => ({ ...f, calories: e.target.value }))} placeholder="Total calories" type="number" style={{ ...inputStyle, flex: 1 }} />
+              <input value={form.protein} onChange={e => setForm(f => ({ ...f, protein: e.target.value }))} placeholder="Protein (g)" type="number" style={{ ...inputStyle, flex: 1 }} />
             </div>
 
-            {!manualMode && (
-              <>
-                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                  <button onClick={() => setManualMode(false)} style={{ flex: 1, background: !manualMode ? `${T.primary}22` : T.card2, border: `1px solid ${!manualMode ? T.primary : T.border}`, borderRadius: 10, color: !manualMode ? T.primary : T.muted, fontFamily: "inherit", fontSize: 13, padding: "8px 0", cursor: "pointer" }}>Paste Recipe Text</button>
-                  <button onClick={() => setManualMode(true)} style={{ flex: 1, background: T.card2, border: `1px solid ${T.border}`, borderRadius: 10, color: T.muted, fontFamily: "inherit", fontSize: 13, padding: "8px 0", cursor: "pointer" }}>Enter Manually</button>
-                </div>
-                <textarea value={pasteText} onChange={e => setPasteText(e.target.value)}
-                  placeholder="Paste your recipe text here — the AI will read the name, calories and protein automatically..."
-                  style={{ width: "100%", boxSizing: "border-box", background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 13, padding: "12px 14px", outline: "none", minHeight: 120, resize: "none", lineHeight: 1.5 }}
-                />
-                <button onClick={parseRecipe} disabled={parsing || !pasteText.trim()}
-                  style={{ width: "100%", marginTop: 12, background: parsing ? T.card2 : `linear-gradient(135deg,${T.gradA},${T.gradB}88)`, border: `1px solid ${T.primary}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, fontWeight: 700, padding: "14px", cursor: parsing ? "default" : "pointer" }}>
-                  {parsing ? "Reading recipe..." : "Import Recipe"}
-                </button>
-              </>
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: T.muted, marginBottom: 6 }}>How many servings does this recipe make?</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button onClick={() => setForm(f => ({ ...f, servings: String(Math.max(1, Number(f.servings) - 1)) }))}
+                  style={{ width: 36, height: 36, borderRadius: 10, background: T.card2, border: `1px solid ${T.border}`, color: T.text, fontSize: 18, cursor: "pointer" }}>−</button>
+                <span style={{ fontSize: 20, fontWeight: 700, color: T.primary, minWidth: 32, textAlign: "center" }}>{form.servings}</span>
+                <button onClick={() => setForm(f => ({ ...f, servings: String(Number(f.servings) + 1) }))}
+                  style={{ width: 36, height: 36, borderRadius: 10, background: T.primary, border: "none", color: "#000", fontSize: 18, cursor: "pointer" }}>+</button>
+                <span style={{ fontSize: 12, color: T.muted, marginLeft: 4 }}>servings</span>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12, color: T.muted, marginBottom: 8, marginTop: 4 }}>Ingredients (optional)</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <input value={ingredientInput} onChange={e => setIngredientInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") addIngredient(); }}
+                placeholder="e.g. 45g rolled oats"
+                style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+              <button onClick={addIngredient} style={{ background: T.primary, border: "none", borderRadius: 12, color: "#000", fontFamily: "inherit", fontSize: 13, fontWeight: 700, padding: "0 16px", cursor: "pointer" }}>Add</button>
+            </div>
+            {form.ingredients && (
+              <div style={{ background: T.card2, borderRadius: 12, padding: "10px 14px", marginBottom: 14 }}>
+                {form.ingredients.split("\n").filter(Boolean).map((ing, i) => (
+                  <div key={i} style={{ fontSize: 13, color: T.text, padding: "3px 0", display: "flex", justifyContent: "space-between" }}>
+                    <span>· {ing}</span>
+                    <button onClick={() => setForm(f => ({ ...f, ingredients: f.ingredients.split("\n").filter((_, j) => j !== i).join("\n") }))}
+                      style={{ background: "none", border: "none", color: T.dim, cursor: "pointer", fontSize: 14 }}>✕</button>
+                  </div>
+                ))}
+              </div>
             )}
 
-            {manualMode && (
-              <>
-                <input value={manual.name} onChange={e => setManual(p => ({ ...p, name: e.target.value }))} placeholder="Meal name"
-                  style={{ width: "100%", boxSizing: "border-box", background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, padding: "12px 14px", outline: "none", marginBottom: 10 }} />
-                <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-                  <input value={manual.calories} onChange={e => setManual(p => ({ ...p, calories: e.target.value }))} placeholder="Calories (kcal)" type="number"
-                    style={{ flex: 1, background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, padding: "12px 14px", outline: "none" }} />
-                  <input value={manual.protein} onChange={e => setManual(p => ({ ...p, protein: e.target.value }))} placeholder="Protein (g)" type="number"
-                    style={{ flex: 1, background: T.card2, border: `1px solid ${T.border}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, padding: "12px 14px", outline: "none" }} />
-                </div>
-                <button onClick={addManual}
-                  style={{ width: "100%", background: `linear-gradient(135deg,${T.gradA},${T.gradB}88)`, border: `1px solid ${T.primary}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, fontWeight: 700, padding: "14px", cursor: "pointer" }}>
-                  Add Meal
-                </button>
-              </>
-            )}
+            <button onClick={addRecipe}
+              style={{ width: "100%", background: `linear-gradient(135deg,${T.gradA},${T.gradB}88)`, border: `1px solid ${T.primary}`, borderRadius: 12, color: T.text, fontFamily: "inherit", fontSize: 15, fontWeight: 700, padding: "14px", cursor: "pointer" }}>
+              Save Recipe
+            </button>
           </div>
         </>
       )}
@@ -987,10 +1035,11 @@ export default function WorkoutApp({ user, onSignOut }) {
     setTodayLog(newLog);
     saveSettings({ recipes: newRecipes });
   };
-  const handleToggleLog = (id) => {
-    const newLog = todayLog.includes(id) ? todayLog.filter(l => l !== id) : [...todayLog, id];
+  const handleToggleLog = (id, servings) => {
+    const newLog = servings === null
+      ? todayLog.filter(e => e.id !== id)
+      : [...todayLog.filter(e => e.id !== id), { id, servings }];
     setTodayLog(newLog);
-    // Save meal logs keyed by date
     supabase.from('settings').select('meal_logs').eq('user_id', user.id).single()
       .then(({ data }) => {
         const existing = data?.meal_logs ?? {};
