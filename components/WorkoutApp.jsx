@@ -644,17 +644,23 @@ function MealsTab({ recipes, onAddRecipe, onDeleteRecipe, onEditRecipe, todayLog
                       </div>
                     </div>
                     <span style={{ color: T.dim, fontSize: 12 }}>{expandedRecipe === r.id ? "▲" : "▼"}</span>
-                    <button onClick={e => { e.stopPropagation(); openEdit(r); }}
-                      style={{ background: T.card2, border: `1px solid ${T.border}`, borderRadius: 8, color: T.muted, fontSize: 12, padding: "5px 10px", cursor: "pointer" }}>Edit</button>
                     <button onClick={e => { e.stopPropagation(); onDeleteRecipe(r.id); }}
                       style={{ background: "none", border: "none", color: T.dim, fontSize: 18, cursor: "pointer", padding: "4px 6px" }}>✕</button>
                   </div>
-                  {expandedRecipe === r.id && r.ingredients?.length > 0 && (
+                  {expandedRecipe === r.id && (
                     <div style={{ padding: "0 16px 14px", borderTop: `1px solid ${T.border}` }}>
-                      <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", margin: "12px 0 8px" }}>Ingredients</div>
-                      {r.ingredients.map((ing, i) => (
-                        <div key={i} style={{ fontSize: 13, color: T.text, padding: "4px 0", borderBottom: i < r.ingredients.length - 1 ? `1px solid ${T.border}` : "none" }}>· {ing}</div>
-                      ))}
+                      {r.ingredients?.length > 0 && (
+                        <>
+                          <div style={{ fontSize: 10, color: T.muted, letterSpacing: 2, textTransform: "uppercase", margin: "12px 0 8px" }}>Ingredients</div>
+                          {r.ingredients.map((ing, i) => (
+                            <div key={i} style={{ fontSize: 13, color: T.text, padding: "4px 0", borderBottom: i < r.ingredients.length - 1 ? `1px solid ${T.border}` : "none" }}>· {ing}</div>
+                          ))}
+                        </>
+                      )}
+                      <button onClick={() => openEdit(r)}
+                        style={{ width: "100%", marginTop: 12, background: T.card2, border: `1px solid ${T.border}`, borderRadius: 10, color: T.primary, fontFamily: "inherit", fontSize: 13, fontWeight: 600, padding: "10px", cursor: "pointer" }}>
+                        ✏️ Edit Recipe
+                      </button>
                     </div>
                   )}
                 </div>
